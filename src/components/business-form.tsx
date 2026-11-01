@@ -1,8 +1,8 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { SymbolView } from 'expo-symbols';
 
+import { Icon } from '@/components/icon';
 import { AppText, Button, Card, ErrorText, Segmented, TextField } from '@/components/ui';
 import { Colors, Spacing } from '@/constants/theme';
 import { COUNTRY_PRESETS, presetFor } from '@/lib/countries';
@@ -107,7 +107,7 @@ export function BusinessForm({
             {previewUri ? (
               <Image source={{ uri: previewUri }} style={styles.logoImage} contentFit="cover" />
             ) : (
-              <SymbolView name="square.and.arrow.up" tintColor={Colors.darkGold} size={24} />
+              <Icon name="upload" color={Colors.darkGold} size={24} />
             )}
           </Pressable>
           <View style={{ flex: 1, gap: 2 }}>

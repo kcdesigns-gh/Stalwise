@@ -25,8 +25,10 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "output": "single",
+      "favicon": "./assets/images/favicon.png",
+      "name": "Stalwise",
+      "themeColor": "#12285F"
     },
     "plugins": [
       "expo-router",

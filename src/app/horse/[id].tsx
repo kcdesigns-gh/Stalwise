@@ -16,7 +16,7 @@ import {
   Segmented,
   TextField,
 } from '@/components/ui';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, ContentMaxWidth, Spacing } from '@/constants/theme';
 import { formatDate, formatMoney, formatMoneyShort, todayIso } from '@/lib/format';
 import { ageFrom, PURPOSE_LABELS, SEX_LABELS } from '@/lib/labels';
 import { supabase, type HorsePurpose } from '@/lib/supabase';
@@ -221,6 +221,6 @@ function Figure({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   headerBadges: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  content: { padding: Spacing.lg, gap: Spacing.md },
+  content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md },
   figures: { flexDirection: 'row', gap: Spacing.sm },
 });

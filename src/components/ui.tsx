@@ -1,6 +1,5 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { SymbolView, type SFSymbol } from 'expo-symbols';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -15,7 +14,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Icon, type IconName } from '@/components/icon';
+import { Colors, ContentMaxWidth, Fonts, Radius, Spacing } from '@/constants/theme';
 
 // ---------------------------------------------------------------------------
 // Text
@@ -53,7 +53,7 @@ const textStyles = StyleSheet.create({
 // ---------------------------------------------------------------------------
 
 export function initialsOf(name: string): string {
-  const words = name.replace(/[^A-Za-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+  const words = name.replace(/['’]/g, '').replace(/[^A-Za-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
   return (words[0]?.[0] ?? '') + (words[1]?.[0] ?? '');
 }
 
@@ -98,6 +98,7 @@ export function BlueHeader({
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+      <View style={styles.headerInner}>
       <View style={styles.headerRow}>
         {showBack ? (
           <Pressable
@@ -106,7 +107,7 @@ export function BlueHeader({
             onPress={() => router.back()}
             style={styles.iconButton}
             hitSlop={8}>
-            <SymbolView name="chevron.left" tintColor={Colors.surface} size={20} />
+            <Icon name="back" color={Colors.surface} size={22} />
           </Pressable>
         ) : null}
         {logo}
@@ -123,6 +124,7 @@ export function BlueHeader({
         {right}
       </View>
       {children}
+      </View>
     </View>
   );
 }
@@ -132,7 +134,7 @@ export function HeaderIconButton({
   label,
   onPress,
 }: {
-  icon: SFSymbol;
+  icon: IconName;
   label: string;
   onPress: () => void;
 }) {
@@ -142,7 +144,7 @@ export function HeaderIconButton({
       accessibilityLabel={label}
       onPress={onPress}
       style={({ pressed }) => [styles.headerIconButton, pressed && { opacity: 0.7 }]}>
-      <SymbolView name={icon} tintColor={Colors.gold} size={20} />
+      <Icon name={icon} color={Colors.gold} size={20} />
     </Pressable>
   );
 }
@@ -246,7 +248,7 @@ export function Button({
   kind?: ButtonKind;
   loading?: boolean;
   disabled?: boolean;
-  icon?: SFSymbol;
+  icon?: IconName;
 }) {
   const off = disabled || loading;
   const textColor = kind === 'primary' ? Colors.surface : kind === 'gold' ? Colors.darkGold : Colors.royalBlue;
@@ -266,7 +268,7 @@ export function Button({
         <ActivityIndicator color={textColor} />
       ) : (
         <>
-          {icon ? <SymbolView name={icon} tintColor={kind === 'primary' ? Colors.gold : textColor} size={18} /> : null}
+          {icon ? <Icon name={icon} color={kind === 'primary' ? Colors.gold : textColor} size={18} /> : null}
           <Text style={[styles.buttonText, { color: textColor }]}>{title}</Text>
         </>
       )}
@@ -375,8 +377,8 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.lg,
     borderBottomWidth: 3,
     borderBottomColor: Colors.gold,
-    gap: Spacing.md,
   },
+  headerInner: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', gap: Spacing.md },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   headerText: { flex: 1 },
   headerTitle: { fontFamily: Fonts.extrabold, fontSize: 20, color: Colors.surface },

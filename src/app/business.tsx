@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BusinessForm } from '@/components/business-form';
 import { BlueHeader, ErrorText } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
+import { ContentMaxWidth, Spacing } from '@/constants/theme';
 import { formValuesFrom, saveBusinessProfile } from '@/lib/business';
 import { useBusiness } from '@/providers/business';
 
@@ -16,7 +16,7 @@ export default function BusinessProfileScreen() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <BlueHeader title="Business profile" showBack />
       <ScrollView
-        contentContainerStyle={{ padding: Spacing.lg, paddingBottom: insets.bottom + 32 }}
+        contentContainerStyle={{ padding: Spacing.lg, paddingBottom: insets.bottom + 32, width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center' }}
         keyboardShouldPersistTaps="handled">
         {isManager && business ? (
           <BusinessForm

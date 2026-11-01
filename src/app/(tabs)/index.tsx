@@ -1,8 +1,8 @@
-import { Link } from 'expo-router';
+import { router } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText, BlueHeader, Card, ErrorText, LogoMark, StatTile } from '@/components/ui';
-import { Colors, Spacing, TabBarClearance } from '@/constants/theme';
+import { Colors, ContentMaxWidth, Spacing, TabBarClearance } from '@/constants/theme';
 import { formatDate, formatMoneyShort, todayIso } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
@@ -151,10 +151,11 @@ export default function HomeScreen() {
             </AppText>
             {data && data.due.length === 0 ? <AppText muted>Nothing due. All up to date.</AppText> : null}
             {data?.due.map((item, i) => (
-              <Link key={item.id} href={{ pathname: '/horse/[id]', params: { id: item.horseId } }} asChild>
                 <Pressable
+                  key={item.id}
                   accessibilityRole="link"
-                  style={[styles.dueRow, i < data.due.length - 1 && styles.divider]}>
+                  onPress={() => router.push({ pathname: '/horse/[id]', params: { id: item.horseId } })}
+                  style={[styles.dueRow, i < data.due.length - 1 ? styles.divider : null]}>
                   <View
                     style={[styles.dot, { backgroundColor: item.dueOn <= data.today ? Colors.mutedGold : Colors.royalBlue }]}
                   />
@@ -163,7 +164,6 @@ export default function HomeScreen() {
                   </AppText>
                   <AppText variant="small">{item.dueOn <= data.today ? 'Due now' : formatDate(item.dueOn)}</AppText>
                 </Pressable>
-              </Link>
             ))}
           </Card>
         ) : null}
@@ -173,7 +173,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: Spacing.lg, gap: Spacing.md, paddingBottom: TabBarClearance },
+  content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md, paddingBottom: TabBarClearance },
   grid: { flexDirection: 'row', gap: 10 },
   dueRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: 10, minHeight: 44 },
   divider: { borderBottomWidth: 1, borderBottomColor: Colors.divider },

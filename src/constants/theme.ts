@@ -47,3 +47,6 @@ export const Radius = {
 
 /** Space to leave under scrolling content so it clears the native tab bar. */
 export const TabBarClearance = 96;
+
+/** Widest the content column gets on a tablet or office screen. */
+export const ContentMaxWidth = 760;

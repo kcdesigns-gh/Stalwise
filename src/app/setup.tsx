@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BusinessForm, EMPTY_BUSINESS } from '@/components/business-form';
 import { Button } from '@/components/ui';
-import { Colors, Fonts, Spacing } from '@/constants/theme';
+import { Colors, ContentMaxWidth, Fonts, Spacing } from '@/constants/theme';
 import { createBusiness } from '@/lib/business';
 import { useAuth } from '@/providers/auth';
 import { useBusiness } from '@/providers/business';
@@ -57,5 +57,5 @@ const styles = StyleSheet.create({
   wordmark: { fontFamily: Fonts.extrabold, fontSize: 22, color: Colors.surface, marginBottom: 8 },
   title: { fontFamily: Fonts.extrabold, fontSize: 20, color: Colors.surface },
   subtitle: { fontFamily: Fonts.medium, fontSize: 13, color: Colors.softBlue },
-  body: { padding: Spacing.lg, gap: Spacing.md },
+  body: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md },
 });

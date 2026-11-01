@@ -1,7 +1,7 @@
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
 import { AppText, Badge, BlueHeader, EmptyState, ErrorText, Loading } from '@/components/ui';
-import { Colors, Radius, Spacing, TabBarClearance } from '@/constants/theme';
+import { Colors, ContentMaxWidth, Radius, Spacing, TabBarClearance } from '@/constants/theme';
 import { formatDate, formatMoney } from '@/lib/format';
 import { INVOICE_STATUS_LABELS } from '@/lib/labels';
 import { supabase } from '@/lib/supabase';
@@ -77,7 +77,7 @@ export default function InvoicesScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: Spacing.lg, gap: 10, paddingBottom: TabBarClearance },
+  list: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: 10, paddingBottom: TabBarClearance },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

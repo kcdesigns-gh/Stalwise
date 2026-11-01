@@ -1,9 +1,9 @@
-import { Link } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText, BlueHeader, Button, Card, EmptyState, ErrorText, Loading } from '@/components/ui';
-import { Colors, Radius, Spacing, TabBarClearance } from '@/constants/theme';
+import { Colors, ContentMaxWidth, Radius, Spacing, TabBarClearance } from '@/constants/theme';
 import { formatDate } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
@@ -177,8 +177,10 @@ function StallCard({ stall }: { stall: StallView }) {
     );
   }
   return (
-    <Link href={{ pathname: '/horse/[id]', params: { id: horse.id } }} asChild>
-      <Pressable accessibilityRole="link" style={[styles.stall, horse.expectedEnd && styles.leaving]}>
+      <Pressable
+        accessibilityRole="link"
+        onPress={() => router.push({ pathname: '/horse/[id]', params: { id: horse.id } })}
+        style={[styles.stall, horse.expectedEnd ? styles.leaving : null]}>
         <AppText variant="label" color={horse.expectedEnd ? Colors.darkGold : Colors.royalBlue}>
           {stall.name.toUpperCase()}
           {horse.expectedEnd ? ` · LEAVING ${formatDate(horse.expectedEnd).toUpperCase()}` : ''}
@@ -187,12 +189,11 @@ function StallCard({ stall }: { stall: StallView }) {
           {horse.name}
         </AppText>
       </Pressable>
-    </Link>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: Spacing.lg, gap: Spacing.md, paddingBottom: TabBarClearance },
+  content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md, paddingBottom: TabBarClearance },
   suggestion: {
     backgroundColor: Colors.lightGold,
     borderWidth: 1.5,

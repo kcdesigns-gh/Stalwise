@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AppText, BlueHeader, Button, Card, DetailRow, ErrorText, LogoMark, ToggleRow } from '@/components/ui';
-import { Colors, Fonts, Spacing, TabBarClearance } from '@/constants/theme';
+import { Colors, ContentMaxWidth, Fonts, Spacing, TabBarClearance } from '@/constants/theme';
 import { ROLE_LABELS } from '@/lib/labels';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/providers/auth';
@@ -93,7 +93,7 @@ export default function MoreScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: Spacing.lg, gap: Spacing.md, paddingBottom: TabBarClearance },
+  content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md, paddingBottom: TabBarClearance },
   bizRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   footer: { textAlign: 'center', fontFamily: Fonts.medium, fontSize: 12, color: Colors.textMuted, marginTop: Spacing.sm },
 });

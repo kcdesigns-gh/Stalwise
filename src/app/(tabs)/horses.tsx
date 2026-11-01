@@ -1,4 +1,4 @@
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, TextInput, View } from 'react-native';
 
@@ -13,7 +13,7 @@ import {
   LogoMark,
   Button,
 } from '@/components/ui';
-import { Colors, Fonts, Radius, Spacing, TabBarClearance } from '@/constants/theme';
+import { Colors, ContentMaxWidth, Fonts, Radius, Spacing, TabBarClearance } from '@/constants/theme';
 import { ageFrom, PURPOSE_LABELS, SEX_LABELS } from '@/lib/labels';
 import { supabase, type HorsePurpose } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
@@ -59,7 +59,7 @@ export default function HorsesScreen() {
       <BlueHeader
         title="Horses"
         subtitle={data ? `${data.length} on the yard` : undefined}
-        right={isManager ? <HeaderIconButton icon="plus" label="Add a horse" onPress={() => router.push('/horse/new')} /> : null}>
+        right={isManager ? <HeaderIconButton icon="add" label="Add a horse" onPress={() => router.push('/horse/new')} /> : null}>
         <TextInput
           value={search}
           onChangeText={setSearch}
@@ -105,7 +105,7 @@ export default function HorsesScreen() {
               <EmptyState
                 title="No horses yet"
                 message={isManager ? 'Add your first horse to start tracking costs, training and stalls.' : 'Your Manager has not added any horses yet.'}
-                action={isManager ? <Button title="Add a horse" icon="plus" onPress={() => router.push('/horse/new')} /> : null}
+                action={isManager ? <Button title="Add a horse" icon="add" onPress={() => router.push('/horse/new')} /> : null}
               />
             ) : (
               <EmptyState title="No matches" message="Try a different name or filter." />
@@ -114,8 +114,10 @@ export default function HorsesScreen() {
           renderItem={({ item }) => {
             const facts = [item.sex ? SEX_LABELS[item.sex] : null, item.colour, ageFrom(item.date_of_birth)].filter(Boolean);
             return (
-              <Link href={{ pathname: '/horse/[id]', params: { id: item.id } }} asChild>
-                <Pressable accessibilityRole="link" style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]}>
+                <Pressable
+                  accessibilityRole="link"
+                  onPress={() => router.push({ pathname: '/horse/[id]', params: { id: item.id } })}
+                  style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]}>
                   <LogoMark name={item.name} size={48} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <AppText variant="bodyStrong" numberOfLines={1}>
@@ -127,7 +129,6 @@ export default function HorsesScreen() {
                   </View>
                   <Badge label={PURPOSE_LABELS[item.current_purpose]} tone={item.current_purpose === 'trading' ? 'gold' : 'muted'} />
                 </Pressable>
-              </Link>
             );
           }}
         />
@@ -157,7 +158,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   filterSelected: { backgroundColor: Colors.gold, borderColor: Colors.gold },
-  list: { padding: Spacing.lg, gap: 10, paddingBottom: TabBarClearance },
+  list: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: 10, paddingBottom: TabBarClearance },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

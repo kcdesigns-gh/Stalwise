@@ -1,8 +1,8 @@
-import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Icon } from '@/components/icon';
 import { AppText, Button, Card, ErrorText, TextField } from '@/components/ui';
 import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
@@ -53,7 +53,7 @@ export default function SignInScreen() {
         contentContainerStyle={[styles.container, { paddingTop: insets.top + 48, paddingBottom: insets.bottom + 24 }]}
         keyboardShouldPersistTaps="handled">
         <View style={styles.brand}>
-          <SymbolView name="crown.fill" tintColor={Colors.gold} size={34} />
+          <Icon name="crown" color={Colors.gold} size={34} />
           <Text style={styles.wordmark} accessibilityRole="header">
             Stal<Text style={{ color: Colors.gold }}>wise</Text>
           </Text>
@@ -125,5 +125,5 @@ const styles = StyleSheet.create({
   brand: { alignItems: 'center', gap: Spacing.sm },
   wordmark: { fontFamily: Fonts.extrabold, fontSize: 36, color: Colors.surface, letterSpacing: 0.3 },
   tagline: { fontFamily: Fonts.medium, fontSize: 14, color: Colors.softBlue },
-  card: { gap: Spacing.md },
+  card: { gap: Spacing.md, width: '100%', maxWidth: 480, alignSelf: 'center' },
 });

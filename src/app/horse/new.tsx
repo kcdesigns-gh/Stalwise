@@ -14,7 +14,7 @@ import {
   TextField,
   ToggleRow,
 } from '@/components/ui';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, ContentMaxWidth, Fonts, Radius, Spacing } from '@/constants/theme';
 import { parseDayMonthYear, toDayMonthYear, todayIso } from '@/lib/format';
 import { PURPOSE_LABELS, SEX_LABELS } from '@/lib/labels';
 import { supabase, type HorsePurpose, type HorseSex } from '@/lib/supabase';
@@ -240,7 +240,7 @@ export default function NewHorseScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: Spacing.lg, gap: Spacing.md },
+  content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md },
   twoCol: { flexDirection: 'row', gap: Spacing.sm },
   col: { flex: 1 },
   ownerList: { gap: Spacing.sm },
