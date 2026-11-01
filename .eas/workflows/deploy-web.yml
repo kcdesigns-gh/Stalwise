@@ -1,0 +1,14 @@
+# Publishes the web version (office use) to EAS Hosting whenever main changes.
+name: Deploy web
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  deploy:
+    name: Deploy
+    type: deploy
+    environment: production
+    params:
+      prod: true
