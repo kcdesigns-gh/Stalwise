@@ -1,6 +1,6 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -16,7 +16,7 @@ import {
   Segmented,
   TextField,
 } from '@/components/ui';
-import { Colors, ContentMaxWidth, Spacing } from '@/constants/theme';
+import { Colors, ContentMaxWidth, Radius, Spacing } from '@/constants/theme';
 import { formatDate, formatMoney, formatMoneyShort, parseMoney, todayIso } from '@/lib/format';
 import { ageFrom, PURPOSE_LABELS, SEX_LABELS } from '@/lib/labels';
 import { supabase, type HorsePurpose } from '@/lib/supabase';
@@ -33,7 +33,7 @@ export default function HorseScreen() {
   const { data, error, loading, refreshing, reload } = useScreenData(async () => {
     const horse = must(await supabase.from('horses').select('*').eq('id', id).single());
 
-    const [history, stall, owner, profit, purchase] = await Promise.all([
+    const [history, stall, owner, profit, purchase, costs] = await Promise.all([
       supabase
         .from('horse_purpose_history')
         .select('purpose, started_on, ended_on')
@@ -51,6 +51,15 @@ export default function HorseScreen() {
       isManager
         ? supabase.from('cost_entries').select('amount').eq('horse_id', id).eq('source', 'purchase').maybeSingle()
         : Promise.resolve({ data: null, error: null }),
+      isManager
+        ? supabase
+            .from('cost_entries')
+            .select('id, cost_on, description, amount, source, billable, cost_categories(name)')
+            .eq('horse_id', id)
+            .order('cost_on', { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(8)
+        : Promise.resolve({ data: null, error: null }),
     ]);
 
     return {
@@ -60,11 +69,21 @@ export default function HorseScreen() {
       owner: owner.data as { name: string; is_self: boolean } | null,
       profit: profit.data,
       purchasePrice: purchase.data ? Number((purchase.data as { amount: number }).amount) : null,
+      costs: ((costs.data ?? []) as {
+        id: string;
+        cost_on: string;
+        description: string | null;
+        amount: number;
+        source: string;
+        billable: boolean;
+        cost_categories: { name: string } | null;
+      }[]),
     };
   }, [id, isManager, seesStalls]);
 
   const [valuation, setValuation] = useState('');
   const [costPrice, setCostPrice] = useState('');
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -80,9 +99,10 @@ export default function HorseScreen() {
     );
   }
 
-  const { horse, history, stallName, owner, profit, purchasePrice } = data;
+  const { horse, history, stallName, owner, profit, purchasePrice, costs } = data;
   const facts = [horse.sex ? SEX_LABELS[horse.sex] : null, horse.colour, ageFrom(horse.date_of_birth)].filter(Boolean);
   const ownHorse = owner?.is_self ?? false;
+  const canLogFeed = role === 'manager' || role === 'groom';
 
   const changePurpose = async (next: HorsePurpose) => {
     if (next === horse.current_purpose) return;
@@ -90,6 +110,20 @@ export default function HorseScreen() {
     setSaving(true);
     const { error: e } = await supabase.from('horses').update({ current_purpose: next }).eq('id', horse.id);
     if (e) setActionError(e.message);
+    await reload();
+    setSaving(false);
+  };
+
+  const removeCost = async (costId: string) => {
+    if (confirmRemove !== costId) {
+      setConfirmRemove(costId);
+      return;
+    }
+    setActionError(null);
+    setSaving(true);
+    const { error: e } = await supabase.from('cost_entries').delete().eq('id', costId);
+    if (e) setActionError(e.message);
+    setConfirmRemove(null);
     await reload();
     setSaving(false);
   };
@@ -162,6 +196,55 @@ export default function HorseScreen() {
             {ownHorse && Number(profit.sale_income ?? 0) === 0 ? (
               <AppText variant="small">Unsold own horses show no income until they are sold. The valuation is for reference only.</AppText>
             ) : null}
+          </Card>
+        ) : null}
+
+        {canLogFeed && !isManager ? (
+          <Card>
+            <AppText variant="heading" accessibilityRole="header">
+              Feeding
+            </AppText>
+            <Button icon="add" title="Log feed" onPress={() => router.push({ pathname: '/log/[horseId]', params: { horseId: horse.id, mode: 'feed' } })} />
+          </Card>
+        ) : null}
+
+        {isManager ? (
+          <Card>
+            <AppText variant="heading" accessibilityRole="header">
+              Costs
+            </AppText>
+            {costs.length === 0 ? <AppText muted>No costs logged yet.</AppText> : null}
+            {costs.map((c, i) => (
+              <View key={c.id} style={[styles.costRow, i < costs.length - 1 && styles.costDivider]}>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <AppText variant="bodyStrong" numberOfLines={2}>
+                    {c.description ?? c.cost_categories?.name ?? 'Cost'}
+                  </AppText>
+                  <AppText variant="small">
+                    {formatDate(c.cost_on)} · {c.cost_categories?.name ?? 'Cost'}
+                    {c.billable ? ' · on invoice' : ''}
+                  </AppText>
+                </View>
+                <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                  <AppText variant="bodyStrong">{formatMoney(c.amount, currency)}</AppText>
+                  {c.source === 'manual' ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={confirmRemove === c.id ? 'Tap again to remove this cost' : 'Remove this cost'}
+                      onPress={() => removeCost(c.id)}
+                      disabled={saving}
+                      hitSlop={8}
+                      style={styles.removeButton}>
+                      <AppText variant="small" color={confirmRemove === c.id ? Colors.danger : Colors.textMuted}>
+                        {confirmRemove === c.id ? 'Tap again to remove' : 'Remove'}
+                      </AppText>
+                    </Pressable>
+                  ) : null}
+                </View>
+              </View>
+            ))}
+            <Button icon="add" title="Log medicine or other cost" onPress={() => router.push({ pathname: '/log/[horseId]', params: { horseId: horse.id, mode: 'cost' } })} />
+            <Button kind="secondary" title="Log feed" onPress={() => router.push({ pathname: '/log/[horseId]', params: { horseId: horse.id, mode: 'feed' } })} />
           </Card>
         ) : null}
 
@@ -265,4 +348,7 @@ const styles = StyleSheet.create({
   headerBadges: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md },
   figures: { flexDirection: 'row', gap: Spacing.sm },
+  costRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: 10 },
+  costDivider: { borderBottomWidth: 1, borderBottomColor: Colors.divider },
+  removeButton: { minHeight: 24, justifyContent: 'center', borderRadius: Radius.sm },
 });

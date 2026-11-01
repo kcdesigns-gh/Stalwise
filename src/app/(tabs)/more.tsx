@@ -57,6 +57,18 @@ export default function MoreScreen() {
           ) : null}
         </Card>
 
+        {isManager ? (
+          <Card>
+            <AppText variant="heading" accessibilityRole="header">
+              Costs
+            </AppText>
+            <AppText variant="small">
+              Your feeds, medicine and supplements with what each costs. Log them against horses and the cost is worked out for you.
+            </AppText>
+            <Button title="Products & prices" onPress={() => router.push('/products')} />
+          </Card>
+        ) : null}
+
         <Card>
           <AppText variant="heading" accessibilityRole="header">
             Features

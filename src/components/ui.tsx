@@ -333,6 +333,46 @@ export function Segmented<T extends string>({
   );
 }
 
+export function ChoiceList<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { value: T; label: string; note?: string }[];
+  value: T | null;
+  onChange: (next: T) => void;
+}) {
+  return (
+    <View style={styles.field}>
+      <AppText variant="label">{label}</AppText>
+      <View style={{ gap: Spacing.sm }} accessibilityRole="radiogroup" accessibilityLabel={label}>
+        {options.map((option) => {
+          const selected = option.value === value;
+          return (
+            <Pressable
+              key={option.value}
+              accessibilityRole="radio"
+              accessibilityState={{ selected }}
+              onPress={() => onChange(option.value)}
+              style={[styles.choice, selected && styles.choiceSelected]}>
+              <AppText style={{ fontFamily: selected ? Fonts.bold : Fonts.semibold }} color={selected ? Colors.gold : Colors.text}>
+                {option.label}
+              </AppText>
+              {option.note ? (
+                <AppText variant="small" color={selected ? Colors.softBlue : Colors.textMuted}>
+                  {option.note}
+                </AppText>
+              ) : null}
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 export function ToggleRow({
   label,
   value,
@@ -460,6 +500,18 @@ const styles = StyleSheet.create({
   segmentSelected: { backgroundColor: Colors.deepBlue, borderColor: Colors.deepBlue },
   segmentText: { fontFamily: Fonts.semibold, fontSize: 14, color: Colors.text },
   segmentTextSelected: { color: Colors.gold, fontFamily: Fonts.bold },
+  choice: {
+    minHeight: 48,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: Colors.inputBorder,
+    backgroundColor: Colors.surface,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    gap: 2,
+    justifyContent: 'center',
+  },
+  choiceSelected: { backgroundColor: Colors.deepBlue, borderColor: Colors.deepBlue },
   toggleRow: { flexDirection: 'row', alignItems: 'center', minHeight: 52, gap: Spacing.md },
   toggleTrack: { width: 52, height: 30, borderRadius: 15, padding: 3, justifyContent: 'center' },
   toggleOn: { backgroundColor: Colors.royalBlue },

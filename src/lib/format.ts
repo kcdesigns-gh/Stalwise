@@ -79,3 +79,11 @@ export function parseMoney(text: string): number | null {
   if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
   return Number(cleaned);
 }
+
+/** Reads a quantity such as "2", "0,5" or "1.25". Returns null unless it is above zero (up to 3 decimals). */
+export function parseQuantity(text: string): number | null {
+  const cleaned = text.trim().replace(',', '.');
+  if (!/^\d+(\.\d{1,3})?$/.test(cleaned)) return null;
+  const value = Number(cleaned);
+  return value > 0 ? value : null;
+}
