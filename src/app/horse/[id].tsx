@@ -40,7 +40,7 @@ export default function HorseScreen() {
         .eq('horse_id', id)
         .order('started_on', { ascending: false }),
       seesStalls
-        ? supabase.from('stall_assignments').select('stalls(name)').eq('horse_id', id).is('ended_on', null).maybeSingle()
+        ? supabase.from('stall_assignments').select('started_on, expected_end_on, stalls(name)').eq('horse_id', id).is('ended_on', null).maybeSingle()
         : Promise.resolve({ data: null, error: null }),
       isManager && horse.current_owner_id
         ? supabase.from('owners').select('name, is_self').eq('id', horse.current_owner_id).single()
@@ -66,6 +66,8 @@ export default function HorseScreen() {
       horse,
       history: must(history) ?? [],
       stallName: (stall.data as { stalls: { name: string } | null } | null)?.stalls?.name ?? null,
+      stallSince: (stall.data as { started_on: string } | null)?.started_on ?? null,
+      stallLeaving: (stall.data as { expected_end_on: string | null } | null)?.expected_end_on ?? null,
       owner: owner.data as { name: string; is_self: boolean } | null,
       profit: profit.data,
       purchasePrice: purchase.data ? Number((purchase.data as { amount: number }).amount) : null,
@@ -99,7 +101,7 @@ export default function HorseScreen() {
     );
   }
 
-  const { horse, history, stallName, owner, profit, purchasePrice, costs } = data;
+  const { horse, history, stallName, stallSince, stallLeaving, owner, profit, purchasePrice, costs } = data;
   const facts = [horse.sex ? SEX_LABELS[horse.sex] : null, horse.colour, ageFrom(horse.date_of_birth)].filter(Boolean);
   const ownHorse = owner?.is_self ?? false;
   const canLogFeed = role === 'manager' || role === 'groom';
@@ -202,6 +204,32 @@ export default function HorseScreen() {
             ) : null}
             {ownHorse && Number(profit.sale_income ?? 0) === 0 ? (
               <AppText variant="small">Unsold own horses show no income until they are sold. The valuation is for reference only.</AppText>
+            ) : null}
+          </Card>
+        ) : null}
+
+        {seesStalls ? (
+          <Card>
+            <AppText variant="heading" accessibilityRole="header">
+              Stall
+            </AppText>
+            {stallName ? (
+              <>
+                <AppText variant="bodyStrong">{stallName}</AppText>
+                <AppText variant="small">
+                  Since {formatDate(stallSince)}
+                  {stallLeaving ? ` · expected to leave ${formatDate(stallLeaving)}` : ''}
+                </AppText>
+              </>
+            ) : (
+              <AppText muted>Not in a stall.</AppText>
+            )}
+            {isManager ? (
+              <Button
+                kind={stallName ? 'secondary' : 'primary'}
+                title={stallName ? 'Move or take out of stall' : 'Put in a stall'}
+                onPress={() => router.push({ pathname: '/assign/[horseId]', params: { horseId: horse.id } })}
+              />
             ) : null}
           </Card>
         ) : null}

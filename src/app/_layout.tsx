@@ -49,6 +49,9 @@ function RootNavigator() {
         <Stack.Screen name="business" />
         <Stack.Screen name="products" />
         <Stack.Screen name="feed-rate" />
+        <Stack.Screen name="stall/[id]" />
+        <Stack.Screen name="assign/[horseId]" />
+        <Stack.Screen name="waiting/new" options={{ presentation: 'modal' }} />
         <Stack.Screen name="product/[id]" />
         <Stack.Screen name="log/[horseId]" options={{ presentation: 'modal' }} />
       </Stack.Protected>

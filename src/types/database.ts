@@ -2639,6 +2639,10 @@ export type Database = {
       }
     }
     Functions: {
+      assign_horse_to_stall: {
+        Args: { expected_end?: string; horse: string; stall: string }
+        Returns: undefined
+      }
       create_business: {
         Args: {
           business_name: string
@@ -2653,6 +2657,7 @@ export type Database = {
         Args: { bid: string; for_month: string }
         Returns: number
       }
+      remove_horse_from_stall: { Args: { horse: string }; Returns: undefined }
       run_month_allocation: {
         Args: { bid: string; for_month: string }
         Returns: Json
