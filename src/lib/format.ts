@@ -69,3 +69,13 @@ export function toDayMonthYear(iso: string): string {
 export function capitalise(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+/**
+ * Reads an amount typed by a person: "45000", "45 000", "R 45 000,50".
+ * Returns null when it is not a valid amount (up to 2 decimals, no negatives).
+ */
+export function parseMoney(text: string): number | null {
+  const cleaned = text.replace(/[\s\u00a0R]/g, '').replace(',', '.');
+  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
+  return Number(cleaned);
+}

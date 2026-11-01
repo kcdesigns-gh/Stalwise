@@ -17,7 +17,7 @@ import {
   TextField,
 } from '@/components/ui';
 import { Colors, ContentMaxWidth, Spacing } from '@/constants/theme';
-import { formatDate, formatMoney, formatMoneyShort, todayIso } from '@/lib/format';
+import { formatDate, formatMoney, formatMoneyShort, parseMoney, todayIso } from '@/lib/format';
 import { ageFrom, PURPOSE_LABELS, SEX_LABELS } from '@/lib/labels';
 import { supabase, type HorsePurpose } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
@@ -33,7 +33,7 @@ export default function HorseScreen() {
   const { data, error, loading, refreshing, reload } = useScreenData(async () => {
     const horse = must(await supabase.from('horses').select('*').eq('id', id).single());
 
-    const [history, stall, owner, profit] = await Promise.all([
+    const [history, stall, owner, profit, purchase] = await Promise.all([
       supabase
         .from('horse_purpose_history')
         .select('purpose, started_on, ended_on')
@@ -48,6 +48,9 @@ export default function HorseScreen() {
       isManager
         ? supabase.from('horse_profitability').select('*').eq('horse_id', id).maybeSingle()
         : Promise.resolve({ data: null, error: null }),
+      isManager
+        ? supabase.from('cost_entries').select('amount').eq('horse_id', id).eq('source', 'purchase').maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
     ]);
 
     return {
@@ -56,10 +59,12 @@ export default function HorseScreen() {
       stallName: (stall.data as { stalls: { name: string } | null } | null)?.stalls?.name ?? null,
       owner: owner.data as { name: string; is_self: boolean } | null,
       profit: profit.data,
+      purchasePrice: purchase.data ? Number((purchase.data as { amount: number }).amount) : null,
     };
   }, [id, isManager, seesStalls]);
 
   const [valuation, setValuation] = useState('');
+  const [costPrice, setCostPrice] = useState('');
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -75,7 +80,7 @@ export default function HorseScreen() {
     );
   }
 
-  const { horse, history, stallName, owner, profit } = data;
+  const { horse, history, stallName, owner, profit, purchasePrice } = data;
   const facts = [horse.sex ? SEX_LABELS[horse.sex] : null, horse.colour, ageFrom(horse.date_of_birth)].filter(Boolean);
   const ownHorse = owner?.is_self ?? false;
 
@@ -85,6 +90,18 @@ export default function HorseScreen() {
     setSaving(true);
     const { error: e } = await supabase.from('horses').update({ current_purpose: next }).eq('id', horse.id);
     if (e) setActionError(e.message);
+    await reload();
+    setSaving(false);
+  };
+
+  const saveCostPrice = async () => {
+    const amount = parseMoney(costPrice);
+    if (amount === null) return setActionError('Enter the cost price as a number, for example 45000.');
+    setActionError(null);
+    setSaving(true);
+    const { error: e } = await supabase.rpc('set_horse_purchase_price', { horse: horse.id, price: amount });
+    if (e) setActionError(e.message);
+    else setCostPrice('');
     await reload();
     setSaving(false);
   };
@@ -153,6 +170,12 @@ export default function HorseScreen() {
             Details
           </AppText>
           {isManager ? <DetailRow label="Owner" value={owner ? (owner.is_self ? `${owner.name} (own)` : owner.name) : '—'} /> : null}
+          {isManager && ownHorse ? (
+            <DetailRow
+              label="Cost price"
+              value={purchasePrice != null ? formatMoney(purchasePrice, currency) : 'Not recorded'}
+            />
+          ) : null}
           <DetailRow label="Breed" value={horse.breed ?? '—'} />
           <DetailRow label="Passport / ID" value={horse.passport_number ?? '—'} />
           <DetailRow label="Microchipped" value={horse.microchipped ? 'Yes' : 'No'} />
@@ -193,6 +216,25 @@ export default function HorseScreen() {
             ) : (
               <AppText variant="small">Client horses stay on Training.</AppText>
             )}
+            {ownHorse ? (
+              <>
+                <TextField
+                  label={`Cost price (${currency})`}
+                  value={costPrice}
+                  onChangeText={setCostPrice}
+                  keyboardType="decimal-pad"
+                  placeholder={purchasePrice != null ? String(purchasePrice) : '45000'}
+                  hint="What you paid for the horse. Enter 0 to remove it."
+                />
+                <Button
+                  kind="secondary"
+                  title="Save cost price"
+                  onPress={saveCostPrice}
+                  loading={saving}
+                  disabled={!costPrice.trim()}
+                />
+              </>
+            ) : null}
             <TextField
               label={`New valuation (${currency})`}
               value={valuation}

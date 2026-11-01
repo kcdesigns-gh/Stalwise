@@ -15,7 +15,7 @@ import {
   ToggleRow,
 } from '@/components/ui';
 import { Colors, ContentMaxWidth, Fonts, Radius, Spacing } from '@/constants/theme';
-import { parseDayMonthYear, toDayMonthYear, todayIso } from '@/lib/format';
+import { parseDayMonthYear, parseMoney, toDayMonthYear, todayIso } from '@/lib/format';
 import { PURPOSE_LABELS, SEX_LABELS } from '@/lib/labels';
 import { supabase, type HorsePurpose, type HorseSex } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
@@ -55,6 +55,8 @@ export default function NewHorseScreen() {
   const [notes, setNotes] = useState('');
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [purpose, setPurpose] = useState<HorsePurpose>('training');
+  const [costPrice, setCostPrice] = useState('');
+  const [savedId, setSavedId] = useState<string | null>(null);
 
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
@@ -68,12 +70,19 @@ export default function NewHorseScreen() {
   const chosenOwner = ownerId ?? selfOwner?.id ?? null;
   const isClientHorse = chosenOwner === NEW_CLIENT || (!!chosenOwner && chosenOwner !== selfOwner?.id);
 
+  // Cost price applies to the yard's own trading and broodstock horses, not client horses.
+  const needsCost = !isClientHorse && (purpose === 'trading' || purpose === 'broodstock');
+
   const purposeOptions = (['training', 'trading', 'broodstock'] as HorsePurpose[])
     .filter((p) => (p === 'trading' ? features.trading : p === 'broodstock' ? features.breeding : true))
     .map((p) => ({ value: p, label: PURPOSE_LABELS[p] }));
 
   const save = async () => {
     setError(null);
+    if (savedId) {
+      router.replace({ pathname: '/horse/[id]', params: { id: savedId } });
+      return;
+    }
     if (!name.trim()) return setError('Enter the horse’s name.');
     const entry = parseDayMonthYear(entryDate);
     if (!entry) return setError('Enter the entry date as day/month/year, for example 01/11/2026.');
@@ -81,6 +90,11 @@ export default function NewHorseScreen() {
     if (birthDate.trim() && !born) return setError('Enter the birth date as day/month/year.');
     if (chosenOwner === NEW_CLIENT && !clientName.trim()) return setError('Enter the new client’s name.');
     if (!chosenOwner) return setError('Choose who owns this horse.');
+    let cost: number | null = null;
+    if (needsCost && costPrice.trim()) {
+      cost = parseMoney(costPrice);
+      if (cost === null) return setError('Enter the cost price as a number, for example 45000.');
+    }
 
     setBusy(true);
     try {
@@ -125,6 +139,16 @@ export default function NewHorseScreen() {
           .select('id')
           .single(),
       );
+      setSavedId(horse.id);
+
+      if (cost && cost > 0) {
+        const { error: costError } = await supabase.rpc('set_horse_purchase_price', { horse: horse.id, price: cost });
+        if (costError) {
+          setError(`The horse was saved, but the cost price was not (${costError.message}). Tap “Open horse” and add it there.`);
+          setBusy(false);
+          return;
+        }
+      }
       router.replace({ pathname: '/horse/[id]', params: { id: horse.id } });
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Could not save the horse.';
@@ -201,6 +225,16 @@ export default function NewHorseScreen() {
             disabled={isClientHorse}
           />
           {isClientHorse ? <AppText variant="small">Client horses are always Training.</AppText> : null}
+          {needsCost ? (
+            <TextField
+              label={`Cost price (${business!.currency_code})`}
+              value={costPrice}
+              onChangeText={setCostPrice}
+              keyboardType="decimal-pad"
+              placeholder="45000"
+              hint="What you paid for the horse. It counts as a cost against its profit. Leave empty if it was bred on the yard."
+            />
+          ) : null}
         </Card>
 
         <Card>
@@ -233,7 +267,7 @@ export default function NewHorseScreen() {
         </Card>
 
         <ErrorText message={error} />
-        <Button title="Save horse" onPress={save} loading={busy} />
+        <Button title={savedId ? 'Open horse' : 'Save horse'} onPress={save} loading={busy} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

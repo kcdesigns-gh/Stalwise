@@ -2655,6 +2655,10 @@ export type Database = {
         Args: { bid: string; for_month: string }
         Returns: Json
       }
+      set_horse_purchase_price: {
+        Args: { horse: string; price: number }
+        Returns: undefined
+      }
     }
     Enums: {
       horse_purpose: "broodstock" | "trading" | "training"
