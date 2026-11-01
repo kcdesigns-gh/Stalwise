@@ -53,6 +53,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "owner": "kcdesigns",
+    "extra": {
+      "eas": {
+        "projectId": "250470ec-7fb0-4a01-a231-cfd4d9b35e6c"
+      }
     }
   }
 }
