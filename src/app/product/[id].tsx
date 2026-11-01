@@ -161,7 +161,14 @@ function ProductForm({ productId, initial, categories }: { productId: string | n
             label="Type"
             options={PRODUCT_CATEGORY_CODES.map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))}
             value={v.categoryCode}
-            onChange={(c) => set('categoryCode', c)}
+            onChange={(c) =>
+              setV((prev) => ({
+                ...prev,
+                categoryCode: c,
+                // New everyday feeds are already in the automatic daily rate.
+                includedInFeedRate: !productId && c === 'feed' ? true : prev.includedInFeedRate,
+              }))
+            }
           />
         </Card>
 
@@ -193,13 +200,13 @@ function ProductForm({ productId, initial, categories }: { productId: string | n
         {v.categoryCode === 'feed' ? (
           <Card>
             <ToggleRow
-              label="Already covered by the flat daily feed rate"
+              label="Already covered by the daily feed rate"
               value={v.includedInFeedRate}
               onChange={(next) => set('includedInFeedRate', next)}
               last
             />
             <AppText variant="small">
-              Switch this on for your everyday feed. Logging it then adds no separate cost, because it is already in the flat rate. Leave it off for extras you want costed one by one.
+              Switch this on for your everyday feed, because it is already in the automatic daily feed rate. Logging it then adds no separate cost. Leave it off for extras you want costed one by one.
             </AppText>
           </Card>
         ) : null}

@@ -63,9 +63,10 @@ export default function MoreScreen() {
               Costs
             </AppText>
             <AppText variant="small">
-              Your feeds, medicine and supplements with what each costs. Log them against horses and the cost is worked out for you.
+              Set what it costs to feed a horse each day and every horse is charged automatically. Keep your medicine and supplement prices in the product list.
             </AppText>
-            <Button title="Products & prices" onPress={() => router.push('/products')} />
+            <Button title="Daily feed rate" onPress={() => router.push('/feed-rate')} />
+            <Button kind="secondary" title="Products & prices" onPress={() => router.push('/products')} />
           </Card>
         ) : null}
 

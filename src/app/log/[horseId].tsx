@@ -196,6 +196,9 @@ function LogForm({
 
         {productBacked ? (
           <Card>
+            {mode === 'feed' ? (
+              <AppText variant="small">Everyday feed is charged automatically at the daily feed rate. Use this for extras.</AppText>
+            ) : null}
             {choices.length === 0 ? (
               <AppText muted>
                 {isManager

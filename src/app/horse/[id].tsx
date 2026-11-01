@@ -186,13 +186,20 @@ export default function HorseScreen() {
               <Figure label="Full cost" value={formatMoneyShort(profit.total_cost, currency)} />
               <Figure label="Profit" value={formatMoneyShort(profit.profit, currency)} />
             </View>
-            <DetailRow label="Direct costs" value={formatMoney(profit.direct_costs, currency)} />
+            <DetailRow label="Logged costs" value={formatMoney(profit.direct_costs, currency)} />
+            <DetailRow
+              label={`Feed (${profit.feed_days} day${profit.feed_days === 1 ? '' : 's'})`}
+              value={formatMoney(profit.feed_costs, currency)}
+            />
             <DetailRow label="Shared costs" value={formatMoney(profit.shared_costs, currency)} />
             <DetailRow
               label="Latest valuation"
               value={profit.latest_valuation != null ? `${formatMoney(profit.latest_valuation, currency)} · ${formatDate(profit.latest_valuation_on)}` : 'None yet'}
               last
             />
+            {profit.feed_days === 0 ? (
+              <AppText variant="small">No daily feed rate is set yet, so feed is not being counted. Set it under More → Daily feed rate.</AppText>
+            ) : null}
             {ownHorse && Number(profit.sale_income ?? 0) === 0 ? (
               <AppText variant="small">Unsold own horses show no income until they are sold. The valuation is for reference only.</AppText>
             ) : null}
@@ -204,6 +211,7 @@ export default function HorseScreen() {
             <AppText variant="heading" accessibilityRole="header">
               Feeding
             </AppText>
+            <AppText variant="small">Everyday feed is charged automatically. Log anything extra here.</AppText>
             <Button icon="add" title="Log feed" onPress={() => router.push({ pathname: '/log/[horseId]', params: { horseId: horse.id, mode: 'feed' } })} />
           </Card>
         ) : null}
@@ -244,7 +252,8 @@ export default function HorseScreen() {
               </View>
             ))}
             <Button icon="add" title="Log medicine or other cost" onPress={() => router.push({ pathname: '/log/[horseId]', params: { horseId: horse.id, mode: 'cost' } })} />
-            <Button kind="secondary" title="Log feed" onPress={() => router.push({ pathname: '/log/[horseId]', params: { horseId: horse.id, mode: 'feed' } })} />
+            <Button kind="secondary" title="Log extra feed" onPress={() => router.push({ pathname: '/log/[horseId]', params: { horseId: horse.id, mode: 'feed' } })} />
+            <AppText variant="small">Everyday feed is charged automatically at the daily feed rate. Log only extras here.</AppText>
           </Card>
         ) : null}
 

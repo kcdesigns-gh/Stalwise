@@ -2594,6 +2594,8 @@ export type Database = {
         Row: {
           business_id: string | null
           direct_costs: number | null
+          feed_costs: number | null
+          feed_days: number | null
           horse_id: string | null
           invoiced_income: number | null
           latest_valuation: number | null
@@ -2654,6 +2656,10 @@ export type Database = {
       run_month_allocation: {
         Args: { bid: string; for_month: string }
         Returns: Json
+      }
+      set_daily_feed_rate: {
+        Args: { bid: string; from_date: string; rate: number }
+        Returns: undefined
       }
       set_horse_purchase_price: {
         Args: { horse: string; price: number }
