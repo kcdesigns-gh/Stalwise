@@ -10,8 +10,11 @@ import {
   BlueHeader,
   Button,
   Card,
+  CostBreakdownBar,
   DetailRow,
   ErrorText,
+  IconStat,
+  IconStatGrid,
   Loading,
   LogoMark,
   Segmented,
@@ -219,6 +222,20 @@ export default function HorseScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.royalBlue} />}>
         <ErrorText message={error ?? actionError} />
 
+        {mainPhoto?.url ? (
+          <View style={styles.hero}>
+            <Image source={{ uri: mainPhoto.url }} style={StyleSheet.absoluteFill} contentFit="cover" />
+            <View style={styles.heroScrim} />
+            <View style={styles.heroBadges}>
+              <Badge label={PURPOSE_LABELS[horse.current_purpose]} />
+              {stallName ? <Badge label={stallName} tone="outline" /> : null}
+            </View>
+            <AppText variant="bodyStrong" color={Colors.surface} style={styles.heroCaption}>
+              On the yard since {formatDate(horse.entry_date)}
+            </AppText>
+          </View>
+        ) : null}
+
         <Card>
           <AppText variant="heading" accessibilityRole="header">
             Photos
@@ -269,12 +286,14 @@ export default function HorseScreen() {
               <Figure label="Full cost" value={formatMoneyShort(profit.total_cost, currency)} />
               <Figure label="Profit" value={formatMoneyShort(profit.profit, currency)} />
             </View>
-            <DetailRow label="Logged costs" value={formatMoney(profit.direct_costs, currency)} />
-            <DetailRow
-              label={`Feed (${profit.feed_days} day${profit.feed_days === 1 ? '' : 's'})`}
-              value={formatMoney(profit.feed_costs, currency)}
+            <CostBreakdownBar
+              items={[
+                { label: 'Logged costs', value: Number(profit.direct_costs) },
+                { label: `Feed (${profit.feed_days} day${profit.feed_days === 1 ? '' : 's'})`, value: Number(profit.feed_costs ?? 0) },
+                { label: 'Shared costs', value: Number(profit.shared_costs) },
+              ]}
+              formatValue={(v) => formatMoney(v, currency)}
             />
-            <DetailRow label="Shared costs" value={formatMoney(profit.shared_costs, currency)} />
             <DetailRow
               label="Latest valuation"
               value={profit.latest_valuation != null ? `${formatMoney(profit.latest_valuation, currency)} · ${formatDate(profit.latest_valuation_on)}` : 'None yet'}
@@ -418,6 +437,17 @@ export default function HorseScreen() {
               </Pressable>
             ) : null}
           </View>
+          <IconStatGrid>
+            <IconStat icon="horseshoe" label="Breed" value={horse.breed ?? '—'} />
+            <IconStat icon="gender" label="Sex" value={horse.sex ? SEX_LABELS[horse.sex] : '—'} />
+            <IconStat icon="calendar" label="Entry date" value={formatDate(horse.entry_date)} />
+            <IconStat icon="chip" label="Microchip" value={horse.microchipped ? 'Yes' : 'No'} tone="gold" />
+            {isManager ? (
+              <IconStat icon="tag" label="Passport / ID" value={horse.passport_number ?? '—'} />
+            ) : null}
+            <IconStat icon="trend" label="Age" value={ageFrom(horse.date_of_birth) ?? '—'} tone="green" />
+          </IconStatGrid>
+
           {isManager ? <DetailRow label="Owner" value={owner ? (owner.is_self ? `${owner.name} (own)` : owner.name) : '—'} /> : null}
           {isManager && ownHorse ? (
             <DetailRow
@@ -425,10 +455,6 @@ export default function HorseScreen() {
               value={purchasePrice != null ? formatMoney(purchasePrice, currency) : 'Not recorded'}
             />
           ) : null}
-          <DetailRow label="Breed" value={horse.breed ?? '—'} />
-          <DetailRow label="Passport / ID" value={horse.passport_number ?? '—'} />
-          <DetailRow label="Microchipped" value={horse.microchipped ? 'Yes' : 'No'} />
-          <DetailRow label="Date of birth" value={formatDate(horse.date_of_birth)} />
           <DetailRow label="Previous owner" value={horse.previous_owner ?? '—'} last={!horse.notes} />
           {horse.notes ? <AppText>{horse.notes}</AppText> : null}
         </Card>
@@ -537,6 +563,24 @@ function Figure({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   headerBadges: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md },
+  hero: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: Radius.lg,
+    overflow: 'hidden',
+    backgroundColor: Colors.deepBlue,
+    justifyContent: 'flex-end',
+  },
+  heroScrim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(18,40,95,0.55)',
+  },
+  heroBadges: { flexDirection: 'row', gap: 6, paddingHorizontal: Spacing.lg, paddingBottom: 6 },
+  heroCaption: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.lg },
   figures: { flexDirection: 'row', gap: Spacing.sm },
   costRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: 10 },
   costDivider: { borderBottomWidth: 1, borderBottomColor: Colors.divider },

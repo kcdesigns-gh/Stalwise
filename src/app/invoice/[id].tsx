@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText, Badge, BlueHeader, Button, Card, ChoiceList, DetailRow, ErrorText, Loading, Segmented, TextField, ToggleRow } from '@/components/ui';
+import { AppText, Badge, BlueHeader, Button, Card, ChoiceList, DetailRow, ErrorText, Loading, LogoMark, Segmented, TextField, ToggleRow } from '@/components/ui';
 import { Colors, ContentMaxWidth, Spacing } from '@/constants/theme';
 import { formatDate, formatMoney, parseDayMonthYear, parseMoney, parseQuantity, toDayMonthYear, todayIso } from '@/lib/format';
 import { INVOICE_STATUS_LABELS, LINE_KIND_LABELS } from '@/lib/labels';
@@ -97,7 +97,7 @@ function InvoiceView({
   insetsBottom: number;
   reload: () => Promise<void>;
 }) {
-  const { business } = useBusiness();
+  const { business, logoUrl } = useBusiness();
   const currency = business!.currency_code;
   const { invoice, lines, totals, payments, credits, unbilled } = data;
   const isDraft = invoice.status === 'draft';
@@ -155,6 +155,13 @@ function InvoiceView({
       <BlueHeader title={invoice.invoice_number ?? 'Draft invoice'} subtitle={invoice.owners?.name ?? undefined} showBack />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insetsBottom + 32 }]} keyboardShouldPersistTaps="handled">
         <Card gold>
+          <View style={styles.letterhead}>
+            <LogoMark name={business!.name} uri={logoUrl} size={44} />
+            <View style={{ flex: 1 }}>
+              <AppText variant="bodyStrong">{business!.name}</AppText>
+              <AppText variant="small">To {invoice.owners?.name ?? '—'}</AppText>
+            </View>
+          </View>
           <View style={styles.statusRow}>
             <Badge label={INVOICE_STATUS_LABELS[invoice.status] ?? invoice.status} tone={invoice.status === 'paid' ? 'blue' : invoice.status === 'part_paid' ? 'gold' : 'muted'} />
             {invoice.due_on ? <AppText variant="small">Due {formatDate(invoice.due_on)}</AppText> : null}
@@ -168,7 +175,7 @@ function InvoiceView({
           <ErrorText message={error} />
           <View style={styles.buttonRow}>
             <View style={{ flex: 1 }}>
-              <Button kind="secondary" title="Share" onPress={share} disabled={lines.length === 0} />
+              <Button kind={isDraft ? 'secondary' : 'gold'} icon="upload" title="Share" onPress={share} disabled={lines.length === 0} />
             </View>
             {isDraft ? (
               <View style={{ flex: 1 }}>
@@ -403,6 +410,7 @@ function CreditNoteCard({
 
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md },
+  letterhead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   statusRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   buttonRow: { flexDirection: 'row', gap: Spacing.sm },
   lineRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: 10 },

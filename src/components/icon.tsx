@@ -15,6 +15,14 @@ const ICONS = {
   more: { ios: 'ellipsis.circle', md: 'more_horiz' },
   camera: { ios: 'camera', md: 'photo_camera' },
   gallery: { ios: 'photo.on.rectangle', md: 'photo_library' },
+  money: { ios: 'dollarsign.circle', md: 'attach_money' },
+  trend: { ios: 'chart.line.uptrend.xyaxis', md: 'trending_up' },
+  calendar: { ios: 'calendar', md: 'event' },
+  tag: { ios: 'tag', md: 'sell' },
+  chip: { ios: 'cpu', md: 'memory' },
+  gender: { ios: 'figure.stand', md: 'wc' },
+  horseshoe: { ios: 'pawprint', md: 'pets' },
+  pin: { ios: 'mappin.circle', md: 'place' },
 } as const satisfies Record<string, { ios: SFSymbol; md: string }>;
 
 export type IconName = keyof typeof ICONS;

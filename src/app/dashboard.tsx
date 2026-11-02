@@ -2,10 +2,11 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText, BlueHeader, Card, ErrorText, Loading, StatTile } from '@/components/ui';
+import { AppText, BlueHeader, Card, CostBreakdownBar, ErrorText, IconStat, IconStatGrid, Loading, LogoMark } from '@/components/ui';
 import { Colors, ContentMaxWidth, Spacing } from '@/constants/theme';
 import { formatMoney, formatMoneyShort } from '@/lib/format';
 import { PURPOSE_LABELS } from '@/lib/labels';
+import { loadAvatarUrls } from '@/lib/photos';
 import { supabase, type HorsePurpose } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
@@ -17,12 +18,14 @@ export default function DashboardScreen() {
   const currency = business!.currency_code;
 
   const { data, error, loading } = useScreenData(async () => {
-    const [horses, stalls, assignments, profit, invoices] = await Promise.all([
+    const [horses, stalls, assignments, profit, invoices, costs, avatars] = await Promise.all([
       supabase.from('horses').select('id, name, current_purpose').eq('business_id', bid).is('archived_at', null),
       supabase.from('stalls').select('id, kind, capacity').eq('business_id', bid).eq('active', true),
       supabase.from('stall_assignments').select('stall_id').eq('business_id', bid).is('ended_on', null),
-      supabase.from('horse_profitability').select('horse_id, total_income, total_cost, profit').eq('business_id', bid),
+      supabase.from('horse_profitability').select('horse_id, total_income, total_cost, profit, feed_costs').eq('business_id', bid),
       supabase.from('invoices').select('id').eq('business_id', bid).in('status', ['sent', 'part_paid']),
+      supabase.from('cost_entries').select('amount, source, cost_categories(name)').eq('business_id', bid).neq('source', 'feed_rate'),
+      loadAvatarUrls(bid).catch(() => ({}) as Record<string, string>),
     ]);
 
     const horseRows = must(horses) ?? [];
@@ -37,6 +40,7 @@ export default function DashboardScreen() {
     const totalIncome = profitRows.reduce((sum, p) => sum + Number(p.total_income), 0);
     const totalCost = profitRows.reduce((sum, p) => sum + Number(p.total_cost), 0);
     const totalProfit = profitRows.reduce((sum, p) => sum + Number(p.profit), 0);
+    const totalFeed = profitRows.reduce((sum, p) => sum + Number(p.feed_costs ?? 0), 0);
 
     const byId = new Map(horseRows.map((h) => [h.id, h.name]));
     const top = [...profitRows]
@@ -51,6 +55,17 @@ export default function DashboardScreen() {
       unpaidBalance = totals.reduce((sum, t) => sum + Number(t.balance ?? 0), 0);
     }
 
+    const byCategory = new Map<string, number>();
+    for (const c of must(costs) ?? []) {
+      const name = (c.cost_categories as { name: string } | null)?.name ?? 'Other';
+      byCategory.set(name, (byCategory.get(name) ?? 0) + Number(c.amount));
+    }
+    if (totalFeed > 0) byCategory.set('Feed (flat rate)', (byCategory.get('Feed (flat rate)') ?? 0) + totalFeed);
+    const categoryBreakdown = [...byCategory.entries()]
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 6);
+
     return {
       horseCount: horseRows.length,
       purposeCounts,
@@ -62,6 +77,8 @@ export default function DashboardScreen() {
       top,
       unpaidBalance,
       openInvoiceCount: openInvoices.length,
+      categoryBreakdown,
+      avatars,
     };
   }, [bid]);
 
@@ -83,24 +100,31 @@ export default function DashboardScreen() {
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
         <ErrorText message={error} />
 
-        <View style={styles.grid}>
-          <StatTile label="Income" value={data ? formatMoneyShort(data.totalIncome, currency) : '–'} />
-          <StatTile label="Full cost" value={data ? formatMoneyShort(data.totalCost, currency) : '–'} />
-          <StatTile label="Profit" value={data ? formatMoneyShort(data.totalProfit, currency) : '–'} />
-        </View>
+        <Card gold>
+          <IconStatGrid>
+            <IconStat icon="money" tone="green" label="Total profit" value={data ? formatMoneyShort(data.totalProfit, currency) : '–'} />
+            <IconStat icon="trend" tone="gold" label="Income" value={data ? formatMoneyShort(data.totalIncome, currency) : '–'} />
+            <IconStat icon="horses" tone="blue" label="Horses on yard" value={String(data?.horseCount ?? '–')} />
+            <IconStat
+              icon="stalls"
+              tone="blue"
+              label="Stall occupancy"
+              value={data && data.trainingCapacity > 0 ? `${data.occupied} of ${data.trainingCapacity}` : '–'}
+            />
+            <IconStat
+              icon="invoices"
+              tone="gold"
+              label="Unpaid invoices"
+              value={data ? formatMoneyShort(data.unpaidBalance, currency) : '–'}
+            />
+            <IconStat icon="tag" tone="blue" label="Full cost" value={data ? formatMoneyShort(data.totalCost, currency) : '–'} />
+          </IconStatGrid>
+        </Card>
 
-        <View style={styles.grid}>
-          <StatTile label="Horses on yard" value={String(data?.horseCount ?? '–')} />
-          <StatTile
-            label="Stall occupancy"
-            value={data && data.trainingCapacity > 0 ? `${data.occupied} of ${data.trainingCapacity}` : '–'}
-          />
-          <StatTile
-            label="Unpaid invoices"
-            value={data ? formatMoneyShort(data.unpaidBalance, currency) : '–'}
-            note={data ? `${data.openInvoiceCount} open` : undefined}
-          />
-        </View>
+        <Card>
+          <AppText variant="heading">Cost breakdown</AppText>
+          {data ? <CostBreakdownBar items={data.categoryBreakdown} formatValue={(v) => formatMoney(v, currency)} /> : null}
+        </Card>
 
         <Card>
           <AppText variant="heading">By purpose</AppText>
@@ -120,8 +144,9 @@ export default function DashboardScreen() {
               key={t.horseId}
               accessibilityRole="link"
               onPress={() => router.push({ pathname: '/horse/[id]', params: { id: t.horseId } })}
-              style={[styles.row, i < data.top.length - 1 && styles.divider]}>
-              <AppText>{t.name}</AppText>
+              style={[styles.row, styles.horseRow, i < data.top.length - 1 && styles.divider]}>
+              <LogoMark name={t.name} uri={data.avatars[t.horseId]} size={36} />
+              <AppText style={{ flex: 1 }}>{t.name}</AppText>
               <AppText variant="bodyStrong" color={t.profit >= 0 ? Colors.success : Colors.danger}>
                 {formatMoney(t.profit, currency)}
               </AppText>
@@ -135,7 +160,7 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md },
-  grid: { flexDirection: 'row', gap: 10 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10 },
+  horseRow: { gap: Spacing.sm },
   divider: { borderBottomWidth: 1, borderBottomColor: Colors.divider },
 });

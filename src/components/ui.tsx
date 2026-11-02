@@ -418,6 +418,118 @@ export function ToggleRow({
   );
 }
 
+// ---------------------------------------------------------------------------
+// IconStat: a round icon badge beside a label/value pair — used for a horse's
+// key facts and dashboard figures, in place of a plain row of text.
+// ---------------------------------------------------------------------------
+
+export function IconStat({
+  icon,
+  label,
+  value,
+  tone = 'blue',
+}: {
+  icon: IconName;
+  label: string;
+  value: string;
+  tone?: 'blue' | 'gold' | 'green';
+}) {
+  return (
+    <View style={statStyles.row}>
+      <View style={[statStyles.badge, statBadgeTones[tone]]}>
+        <Icon name={icon} size={18} color={statIconColors[tone]} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <AppText variant="small">{label}</AppText>
+        <AppText variant="bodyStrong" numberOfLines={1}>
+          {value}
+        </AppText>
+      </View>
+    </View>
+  );
+}
+
+const statBadgeTones = StyleSheet.create({
+  blue: { backgroundColor: '#E7ECFA' },
+  gold: { backgroundColor: Colors.lightGold },
+  green: { backgroundColor: '#E3F3EA' },
+});
+
+const statIconColors = {
+  blue: Colors.royalBlue,
+  gold: Colors.darkGold,
+  green: Colors.success,
+} as const;
+
+const statStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, width: '48%' },
+  badge: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+});
+
+// ---------------------------------------------------------------------------
+// IconStatGrid: lays IconStats out two to a row, wrapping as needed.
+// ---------------------------------------------------------------------------
+
+export function IconStatGrid({ children }: { children: ReactNode }) {
+  return <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md }}>{children}</View>;
+}
+
+// ---------------------------------------------------------------------------
+// CostBreakdownBar: a stacked horizontal bar with a colour-keyed legend —
+// a chart that works the same on native and web with no extra library.
+// ---------------------------------------------------------------------------
+
+const BREAKDOWN_COLORS = [Colors.gold, Colors.royalBlue, Colors.midBlue, Colors.mutedGold, Colors.softBlue, Colors.textMuted];
+
+export function CostBreakdownBar({
+  items,
+  formatValue,
+}: {
+  items: { label: string; value: number }[];
+  formatValue: (value: number) => string;
+}) {
+  const total = items.reduce((sum, i) => sum + Math.max(0, i.value), 0);
+  const shown = items.filter((i) => i.value > 0);
+  if (total <= 0 || shown.length === 0) {
+    return <AppText muted>Nothing logged yet.</AppText>;
+  }
+  return (
+    <View style={{ gap: Spacing.sm }}>
+      <View style={breakdownStyles.bar}>
+        {shown.map((item, i) => (
+          <View
+            key={item.label}
+            style={{
+              flex: Math.max(item.value, total * 0.01),
+              backgroundColor: BREAKDOWN_COLORS[i % BREAKDOWN_COLORS.length],
+            }}
+          />
+        ))}
+      </View>
+      <View style={breakdownStyles.legend}>
+        {shown.map((item, i) => (
+          <View key={item.label} style={breakdownStyles.legendRow}>
+            <View style={[breakdownStyles.dot, { backgroundColor: BREAKDOWN_COLORS[i % BREAKDOWN_COLORS.length] }]} />
+            <AppText variant="small" style={{ flex: 1 }}>
+              {item.label}
+            </AppText>
+            <AppText variant="small" style={{ fontFamily: Fonts.semibold }}>
+              {formatValue(item.value)}
+            </AppText>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const breakdownStyles = StyleSheet.create({
+  bar: { flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden', backgroundColor: Colors.divider },
+  legend: { gap: 6 },
+  legendRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+});
+
 const styles = StyleSheet.create({
   logoFallback: {
     borderWidth: 2,
