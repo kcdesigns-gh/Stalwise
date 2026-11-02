@@ -1,6 +1,7 @@
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 
-import { AppText, Badge, BlueHeader, EmptyState, ErrorText, Loading } from '@/components/ui';
+import { AppText, Badge, BlueHeader, EmptyState, ErrorText, HeaderIconButton, Loading } from '@/components/ui';
 import { Colors, ContentMaxWidth, Radius, Spacing, TabBarClearance } from '@/constants/theme';
 import { formatDate, formatMoney } from '@/lib/format';
 import { INVOICE_STATUS_LABELS } from '@/lib/labels';
@@ -9,7 +10,7 @@ import { must, useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
 
 export default function InvoicesScreen() {
-  const { business } = useBusiness();
+  const { business, isManager } = useBusiness();
   const bid = business!.id;
   const currency = business!.currency_code;
 
@@ -36,7 +37,11 @@ export default function InvoicesScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <BlueHeader title="Invoices" subtitle={data ? `${data.length} invoice${data.length === 1 ? '' : 's'}` : undefined} />
+      <BlueHeader
+        title="Invoices"
+        subtitle={data ? `${data.length} invoice${data.length === 1 ? '' : 's'}` : undefined}
+        right={isManager ? <HeaderIconButton icon="add" label="New invoice" onPress={() => router.push('/invoice/new')} /> : null}
+      />
       {loading && !data ? (
         <Loading />
       ) : (
@@ -49,11 +54,14 @@ export default function InvoicesScreen() {
           ListEmptyComponent={
             <EmptyState
               title="No invoices yet"
-              message="Creating and sharing invoices is the next part being built. Monthly livery and training invoices will appear here."
+              message={isManager ? 'Create your first invoice above.' : 'Your Manager has not created any invoices yet.'}
             />
           }
           renderItem={({ item }) => (
-            <View style={styles.row}>
+            <Pressable
+              accessibilityRole="link"
+              onPress={() => router.push({ pathname: '/invoice/[id]', params: { id: item.id } })}
+              style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]}>
               <View style={{ flex: 1, gap: 2 }}>
                 <AppText variant="bodyStrong">{item.invoice_number ?? 'Draft'}</AppText>
                 <AppText variant="small" numberOfLines={1}>
@@ -68,7 +76,7 @@ export default function InvoicesScreen() {
                   tone={item.status === 'paid' ? 'blue' : item.status === 'part_paid' ? 'gold' : 'muted'}
                 />
               </View>
-            </View>
+            </Pressable>
           )}
         />
       )}

@@ -30,6 +30,17 @@ export const INVOICE_STATUS_LABELS: Record<string, string> = {
   cancelled: 'Cancelled',
 };
 
+export const LINE_KIND_LABELS: Record<string, string> = {
+  training_fee: 'Training fee',
+  livery: 'Livery',
+  sale: 'Horse sale',
+  commission: 'Commission',
+  transport: 'Transport',
+  extra: 'Extra',
+  deposit: 'Deposit',
+  other: 'Other',
+};
+
 export function ageFrom(dateOfBirth: string | null): string | null {
   if (!dateOfBirth) return null;
   const born = new Date(`${dateOfBirth}T00:00:00`);
