@@ -2281,6 +2281,53 @@ export type Database = {
           },
         ]
       }
+      staff_invites: {
+        Row: {
+          business_id: string
+          code: string
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          role: Database["public"]["Enums"]["member_role"]
+          updated_at: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          business_id: string
+          code: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["member_role"]
+          updated_at?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          business_id?: string
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["member_role"]
+          updated_at?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_invites_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stall_assignments: {
         Row: {
           business_id: string
@@ -2639,6 +2686,7 @@ export type Database = {
       }
     }
     Functions: {
+      accept_staff_invite: { Args: { invite_code: string }; Returns: string }
       assign_horse_to_stall: {
         Args: { expected_end?: string; horse: string; stall: string }
         Returns: undefined
@@ -2652,6 +2700,27 @@ export type Database = {
           tax_name?: string
         }
         Returns: string
+      }
+      create_staff_invite: {
+        Args: { bid: string; role: Database["public"]["Enums"]["member_role"] }
+        Returns: {
+          business_id: string
+          code: string
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          role: Database["public"]["Enums"]["member_role"]
+          updated_at: string
+          used_at: string | null
+          used_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "staff_invites"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       generate_recurring_invoices: {
         Args: { bid: string; for_month: string }

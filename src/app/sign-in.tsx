@@ -5,9 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/icon';
 import { AppText, Button, Card, ErrorText, TextField } from '@/components/ui';
 import { Colors, Fonts, Spacing } from '@/constants/theme';
+import { recoveryRedirectUrl } from '@/lib/auth-recovery';
 import { supabase } from '@/lib/supabase';
 
-type Mode = 'sign-in' | 'sign-up';
+type Mode = 'sign-in' | 'sign-up' | 'forgot';
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
@@ -22,8 +23,19 @@ export default function SignInScreen() {
   const submit = async () => {
     setError(null);
     setNotice(null);
+
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail.includes('@')) return setError('Enter a valid email address.');
+
+    if (mode === 'forgot') {
+      setBusy(true);
+      const { error: e } = await supabase.auth.resetPasswordForEmail(cleanEmail, { redirectTo: recoveryRedirectUrl() });
+      setBusy(false);
+      if (e) return setError(friendlyAuthError(e.message));
+      setNotice('If that email has an account, we’ve sent a link to reset the password. Open it on this device.');
+      return;
+    }
+
     if (password.length < 8) return setError('Your password needs at least 8 characters.');
     if (mode === 'sign-up' && !fullName.trim()) return setError('Enter your name.');
 
@@ -61,7 +73,7 @@ export default function SignInScreen() {
         </View>
 
         <Card gold style={styles.card}>
-          <AppText variant="heading">{mode === 'sign-in' ? 'Sign in' : 'Create your account'}</AppText>
+          <AppText variant="heading">{mode === 'sign-in' ? 'Sign in' : mode === 'sign-up' ? 'Create your account' : 'Reset your password'}</AppText>
           {mode === 'sign-up' ? (
             <TextField
               label="Your name"
@@ -80,26 +92,56 @@ export default function SignInScreen() {
             keyboardType="email-address"
             textContentType="emailAddress"
           />
-          <TextField
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
-            textContentType={mode === 'sign-in' ? 'password' : 'newPassword'}
-            hint={mode === 'sign-up' ? 'At least 8 characters.' : undefined}
-          />
+          {mode !== 'forgot' ? (
+            <TextField
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
+              textContentType={mode === 'sign-in' ? 'password' : 'newPassword'}
+              hint={mode === 'sign-up' ? 'At least 8 characters.' : undefined}
+            />
+          ) : null}
           <ErrorText message={error} />
           {notice ? <AppText color={Colors.success}>{notice}</AppText> : null}
-          <Button title={mode === 'sign-in' ? 'Sign in' : 'Create account'} onPress={submit} loading={busy} />
           <Button
-            kind="secondary"
-            title={mode === 'sign-in' ? 'New here? Create an account' : 'I already have an account'}
-            onPress={() => {
-              setError(null);
-              setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in');
-            }}
+            title={mode === 'sign-in' ? 'Sign in' : mode === 'sign-up' ? 'Create account' : 'Send reset link'}
+            onPress={submit}
+            loading={busy}
           />
+          {mode === 'sign-in' ? (
+            <Button
+              kind="secondary"
+              title="Forgot your password?"
+              onPress={() => {
+                setError(null);
+                setNotice(null);
+                setMode('forgot');
+              }}
+            />
+          ) : null}
+          {mode === 'sign-in' || mode === 'sign-up' ? (
+            <Button
+              kind="secondary"
+              title={mode === 'sign-in' ? 'New here? Create an account' : 'I already have an account'}
+              onPress={() => {
+                setError(null);
+                setNotice(null);
+                setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in');
+              }}
+            />
+          ) : (
+            <Button
+              kind="secondary"
+              title="Back to sign in"
+              onPress={() => {
+                setError(null);
+                setNotice(null);
+                setMode('sign-in');
+              }}
+            />
+          )}
         </Card>
       </ScrollView>
     </KeyboardAvoidingView>

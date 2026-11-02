@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BusinessForm, EMPTY_BUSINESS } from '@/components/business-form';
-import { Button } from '@/components/ui';
+import { Button, Card, ErrorText, Segmented, TextField } from '@/components/ui';
 import { Colors, ContentMaxWidth, Fonts, Spacing } from '@/constants/theme';
 import { createBusiness } from '@/lib/business';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/providers/auth';
 import { useBusiness } from '@/providers/business';
 
@@ -12,6 +14,20 @@ export default function SetupScreen() {
   const insets = useSafeAreaInsets();
   const { refresh } = useBusiness();
   const { signOut } = useAuth();
+  const [mode, setMode] = useState<'create' | 'join'>('create');
+  const [code, setCode] = useState('');
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
+
+  const join = async () => {
+    setJoinError(null);
+    if (!code.trim()) return setJoinError('Enter the invite code your Manager gave you.');
+    setJoining(true);
+    const { error } = await supabase.rpc('accept_staff_invite', { invite_code: code.trim() });
+    setJoining(false);
+    if (error) return setJoinError(error.message);
+    await refresh();
+  };
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -24,20 +40,50 @@ export default function SetupScreen() {
             Stal<Text style={{ color: Colors.gold }}>wise</Text>
           </Text>
           <Text style={styles.title} accessibilityRole="header">
-            Set up your business
+            {mode === 'create' ? 'Set up your business' : 'Join your business'}
           </Text>
-          <Text style={styles.subtitle}>Your name and logo appear on your screens and invoices.</Text>
+          <Text style={styles.subtitle}>
+            {mode === 'create'
+              ? 'Your name and logo appear on your screens and invoices.'
+              : 'Enter the code your Manager shared with you.'}
+          </Text>
         </View>
 
         <View style={styles.body}>
-          <BusinessForm
-            initial={EMPTY_BUSINESS}
-            submitLabel="Create my business"
-            onSubmit={async (values, logo) => {
-              await createBusiness(values, logo);
-              await refresh();
-            }}
+          <Segmented
+            label="I want to"
+            options={[
+              { value: 'create', label: 'Create a business' },
+              { value: 'join', label: 'Join with a code' },
+            ]}
+            value={mode}
+            onChange={setMode}
           />
+
+          {mode === 'create' ? (
+            <BusinessForm
+              initial={EMPTY_BUSINESS}
+              submitLabel="Create my business"
+              onSubmit={async (values, logo) => {
+                await createBusiness(values, logo);
+                await refresh();
+              }}
+            />
+          ) : (
+            <Card gold>
+              <TextField
+                label="Invite code"
+                value={code}
+                onChangeText={(t) => setCode(t.toUpperCase())}
+                placeholder="ABC123"
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+              <ErrorText message={joinError} />
+              <Button title="Join" onPress={join} loading={joining} disabled={!code.trim()} />
+            </Card>
+          )}
+
           <Button kind="secondary" title="Sign out" onPress={signOut} />
         </View>
       </ScrollView>

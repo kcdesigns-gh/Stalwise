@@ -55,6 +55,7 @@ export default function MoreScreen() {
           {isManager ? (
             <Button kind="secondary" title="Edit business profile" onPress={() => router.push('/business')} />
           ) : null}
+          {isManager ? <Button kind="secondary" title="Staff" onPress={() => router.push('/staff')} /> : null}
         </Card>
 
         {isManager ? (

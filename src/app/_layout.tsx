@@ -18,7 +18,7 @@ import { BusinessProvider, useBusiness } from '@/providers/business';
 SplashScreen.preventAutoHideAsync();
 
 function RootNavigator() {
-  const { session, loading: authLoading } = useAuth();
+  const { session, loading: authLoading, recovering } = useAuth();
   const { business, loading: businessLoading } = useBusiness();
 
   const ready = !authLoading && (!session || !businessLoading);
@@ -34,20 +34,25 @@ function RootNavigator() {
 
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
-      <Stack.Protected guard={!signedIn}>
+      <Stack.Protected guard={recovering}>
+        <Stack.Screen name="reset-password" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={!signedIn && !recovering}>
         <Stack.Screen name="sign-in" />
       </Stack.Protected>
 
-      <Stack.Protected guard={signedIn && !hasBusiness}>
+      <Stack.Protected guard={signedIn && !hasBusiness && !recovering}>
         <Stack.Screen name="setup" />
       </Stack.Protected>
 
-      <Stack.Protected guard={hasBusiness}>
+      <Stack.Protected guard={hasBusiness && !recovering}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="horse/[id]" />
         <Stack.Screen name="photo/[id]" />
         <Stack.Screen name="horse/new" options={{ presentation: 'modal' }} />
         <Stack.Screen name="business" />
+        <Stack.Screen name="staff" />
         <Stack.Screen name="products" />
         <Stack.Screen name="feed-rate" />
         <Stack.Screen name="stall/[id]" />

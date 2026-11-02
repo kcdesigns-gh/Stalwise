@@ -167,14 +167,30 @@ export function StatTile({ label, value, note }: { label: string; value: string;
   );
 }
 
-export function DetailRow({ label, value, last }: { label: string; value: string; last?: boolean }) {
-  return (
+export function DetailRow({
+  label,
+  value,
+  last,
+  onPress,
+}: {
+  label: string;
+  value: string;
+  last?: boolean;
+  onPress?: () => void;
+}) {
+  const row = (
     <View style={[styles.detailRow, !last && styles.divider]}>
       <AppText muted>{label}</AppText>
       <AppText variant="bodyStrong" style={styles.detailValue}>
         {value}
       </AppText>
     </View>
+  );
+  if (!onPress) return row;
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => pressed && { opacity: 0.6 }}>
+      {row}
+    </Pressable>
   );
 }
 
