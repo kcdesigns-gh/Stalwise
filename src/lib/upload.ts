@@ -26,12 +26,17 @@ export async function pickSquareImage(): Promise<PickedImage | null> {
 }
 
 /** Uploads a local image to a private bucket and returns its storage path. */
-export async function uploadImage(bucket: string, path: string, image: PickedImage): Promise<string> {
+export async function uploadImage(
+  bucket: string,
+  path: string,
+  image: PickedImage,
+  { upsert = true }: { upsert?: boolean } = {},
+): Promise<string> {
   const response = await fetch(image.uri);
   const bytes = await response.arrayBuffer();
   const { error } = await supabase.storage.from(bucket).upload(path, bytes, {
     contentType: image.mimeType,
-    upsert: true,
+    upsert,
   });
   if (error) throw error;
   return path;

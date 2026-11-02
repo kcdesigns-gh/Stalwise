@@ -15,6 +15,7 @@ import {
 } from '@/components/ui';
 import { Colors, ContentMaxWidth, Fonts, Radius, Spacing, TabBarClearance } from '@/constants/theme';
 import { ageFrom, PURPOSE_LABELS, SEX_LABELS } from '@/lib/labels';
+import { loadAvatarUrls } from '@/lib/photos';
 import { supabase, type HorsePurpose } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
@@ -28,24 +29,28 @@ export default function HorsesScreen() {
   const [filter, setFilter] = useState<Filter>('all');
 
   const { data, error, loading, refreshing, reload } = useScreenData(async () => {
-    return must(
-      await supabase
+    const [horses, avatars] = await Promise.all([
+      supabase
         .from('horses')
         .select('id, name, stock_number, current_purpose, sex, colour, breed, date_of_birth')
         .eq('business_id', bid)
         .is('archived_at', null)
         .order('name'),
-    );
+      loadAvatarUrls(bid).catch(() => ({}) as Record<string, string>),
+    ]);
+    return { horses: must(horses), avatars };
   }, [bid]);
+  const horses = data?.horses;
+  const avatars = data?.avatars ?? {};
 
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return (data ?? []).filter((h) => {
+    return (horses ?? []).filter((h) => {
       if (filter !== 'all' && h.current_purpose !== filter) return false;
       if (!q) return true;
       return h.name.toLowerCase().includes(q) || (h.stock_number ?? '').toLowerCase().includes(q);
     });
-  }, [data, search, filter]);
+  }, [horses, search, filter]);
 
   const filters: { value: Filter; label: string }[] = [
     { value: 'all', label: 'All' },
@@ -58,7 +63,7 @@ export default function HorsesScreen() {
     <View style={{ flex: 1 }}>
       <BlueHeader
         title="Horses"
-        subtitle={data ? `${data.length} on the yard` : undefined}
+        subtitle={horses ? `${horses.length} on the yard` : undefined}
         right={isManager ? <HeaderIconButton icon="add" label="Add a horse" onPress={() => router.push('/horse/new')} /> : null}>
         <TextInput
           value={search}
@@ -101,7 +106,7 @@ export default function HorsesScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.royalBlue} />}
           ListHeaderComponent={<ErrorText message={error} />}
           ListEmptyComponent={
-            data && data.length === 0 ? (
+            horses && horses.length === 0 ? (
               <EmptyState
                 title="No horses yet"
                 message={isManager ? 'Add your first horse to start tracking costs, training and stalls.' : 'Your Manager has not added any horses yet.'}
@@ -118,7 +123,7 @@ export default function HorsesScreen() {
                   accessibilityRole="link"
                   onPress={() => router.push({ pathname: '/horse/[id]', params: { id: item.id } })}
                   style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]}>
-                  <LogoMark name={item.name} size={48} />
+                  <LogoMark name={item.name} uri={avatars[item.id]} size={48} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <AppText variant="bodyStrong" numberOfLines={1}>
                       {item.name}

@@ -13,6 +13,8 @@ const ICONS = {
   stalls: { ios: 'square.grid.2x2', md: 'grid_view' },
   invoices: { ios: 'doc.text', md: 'receipt_long' },
   more: { ios: 'ellipsis.circle', md: 'more_horiz' },
+  camera: { ios: 'camera', md: 'photo_camera' },
+  gallery: { ios: 'photo.on.rectangle', md: 'photo_library' },
 } as const satisfies Record<string, { ios: SFSymbol; md: string }>;
 
 export type IconName = keyof typeof ICONS;

@@ -2670,6 +2670,7 @@ export type Database = {
         Args: { horse: string; price: number }
         Returns: undefined
       }
+      set_main_horse_photo: { Args: { photo: string }; Returns: undefined }
     }
     Enums: {
       horse_purpose: "broodstock" | "trading" | "training"

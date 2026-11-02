@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
@@ -19,6 +20,7 @@ import {
 import { Colors, ContentMaxWidth, Radius, Spacing } from '@/constants/theme';
 import { formatDate, formatMoney, formatMoneyShort, parseMoney, todayIso } from '@/lib/format';
 import { ageFrom, PURPOSE_LABELS, SEX_LABELS } from '@/lib/labels';
+import { addHorsePhotos, loadHorsePhotos, pickHorsePhotos } from '@/lib/photos';
 import { supabase, type HorsePurpose } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
@@ -29,11 +31,13 @@ export default function HorseScreen() {
   const { business, isManager, role, features } = useBusiness();
   const currency = business!.currency_code;
   const seesStalls = role === 'manager' || role === 'trainer';
+  const canAddPhotos = role === 'manager' || role === 'trainer';
 
   const { data, error, loading, refreshing, reload } = useScreenData(async () => {
     const horse = must(await supabase.from('horses').select('*').eq('id', id).single());
 
-    const [history, stall, owner, profit, purchase, costs] = await Promise.all([
+    const [photos, history, stall, owner, profit, purchase, costs] = await Promise.all([
+      loadHorsePhotos(id).catch(() => []),
       supabase
         .from('horse_purpose_history')
         .select('purpose, started_on, ended_on')
@@ -64,6 +68,7 @@ export default function HorseScreen() {
 
     return {
       horse,
+      photos,
       history: must(history) ?? [],
       stallName: (stall.data as { stalls: { name: string } | null } | null)?.stalls?.name ?? null,
       stallSince: (stall.data as { started_on: string } | null)?.started_on ?? null,
@@ -87,6 +92,7 @@ export default function HorseScreen() {
   const [costPrice, setCostPrice] = useState('');
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   if (loading && !data) return <Loading />;
@@ -101,10 +107,26 @@ export default function HorseScreen() {
     );
   }
 
-  const { horse, history, stallName, stallSince, stallLeaving, owner, profit, purchasePrice, costs } = data;
+  const { horse, photos, history, stallName, stallSince, stallLeaving, owner, profit, purchasePrice, costs } = data;
   const facts = [horse.sex ? SEX_LABELS[horse.sex] : null, horse.colour, ageFrom(horse.date_of_birth)].filter(Boolean);
   const ownHorse = owner?.is_self ?? false;
   const canLogFeed = role === 'manager' || role === 'groom';
+
+  const mainPhoto = photos.find((p) => p.is_main) ?? photos[0];
+
+  const addPhotos = async (source: 'camera' | 'gallery') => {
+    setActionError(null);
+    try {
+      const picked = await pickHorsePhotos(source);
+      if (picked.length === 0) return;
+      setUploading(picked.length === 1 ? 'Uploading photo…' : `Uploading ${picked.length} photos…`);
+      await addHorsePhotos(horse.business_id, horse.id, picked);
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'The photo could not be uploaded. Please try again.');
+    }
+    setUploading(null);
+    await reload();
+  };
 
   const changePurpose = async (next: HorsePurpose) => {
     if (next === horse.current_purpose) return;
@@ -160,7 +182,7 @@ export default function HorseScreen() {
     <View style={{ flex: 1 }}>
       <BlueHeader title={horse.name} subtitle={[horse.stock_number, ...facts].filter(Boolean).join(' · ')} showBack>
         <View style={styles.headerBadges}>
-          <LogoMark name={horse.name} size={56} />
+          <LogoMark name={horse.name} uri={mainPhoto?.url} size={56} />
           <View style={{ gap: 6 }}>
             <View style={{ flexDirection: 'row', gap: 6 }}>
               <Badge label={PURPOSE_LABELS[horse.current_purpose]} />
@@ -177,6 +199,46 @@ export default function HorseScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.royalBlue} />}>
         <ErrorText message={error ?? actionError} />
+
+        <Card>
+          <AppText variant="heading" accessibilityRole="header">
+            Photos
+          </AppText>
+          {photos.length === 0 ? (
+            <AppText muted>{canAddPhotos ? 'No photos yet. Add the first one below.' : 'No photos yet.'}</AppText>
+          ) : (
+            <View style={styles.photoGrid}>
+              {photos.map((p) => (
+                <Pressable
+                  key={p.id}
+                  accessibilityRole="imagebutton"
+                  accessibilityLabel={p.is_main ? `Main photo of ${horse.name}` : `Photo of ${horse.name}, ${formatDate(p.taken_on)}`}
+                  onPress={() => router.push({ pathname: '/photo/[id]', params: { id: p.id } })}
+                  style={({ pressed }) => [styles.thumb, p.is_main && styles.thumbMain, pressed && { opacity: 0.8 }]}>
+                  {p.url ? <Image source={{ uri: p.url }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
+                  {p.is_main ? (
+                    <View style={styles.mainTag}>
+                      <AppText variant="small" color={Colors.deepBlue} style={{ fontSize: 11 }}>
+                        Main
+                      </AppText>
+                    </View>
+                  ) : null}
+                </Pressable>
+              ))}
+            </View>
+          )}
+          {uploading ? <AppText variant="small">{uploading}</AppText> : null}
+          {canAddPhotos ? (
+            <View style={styles.photoButtons}>
+              <View style={{ flex: 1 }}>
+                <Button icon="camera" title="Take photo" onPress={() => addPhotos('camera')} loading={uploading !== null} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Button kind="secondary" icon="gallery" title="From gallery" onPress={() => addPhotos('gallery')} disabled={uploading !== null} />
+              </View>
+            </View>
+          ) : null}
+        </Card>
 
         {isManager && profit ? (
           <Card gold>
@@ -387,5 +449,24 @@ const styles = StyleSheet.create({
   figures: { flexDirection: 'row', gap: Spacing.sm },
   costRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: 10 },
   costDivider: { borderBottomWidth: 1, borderBottomColor: Colors.divider },
+  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  thumb: {
+    width: '31.5%',
+    aspectRatio: 1,
+    borderRadius: Radius.sm,
+    overflow: 'hidden',
+    backgroundColor: Colors.divider,
+  },
+  thumbMain: { borderWidth: 2, borderColor: Colors.gold },
+  mainTag: {
+    position: 'absolute',
+    left: 4,
+    bottom: 4,
+    backgroundColor: Colors.gold,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  photoButtons: { flexDirection: 'row', gap: Spacing.sm },
   removeButton: { minHeight: 24, justifyContent: 'center', borderRadius: Radius.sm },
 });
