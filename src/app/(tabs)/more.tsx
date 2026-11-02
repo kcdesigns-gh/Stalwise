@@ -57,7 +57,6 @@ export default function MoreScreen() {
           ) : null}
           {isManager ? <Button kind="secondary" title="Staff" onPress={() => router.push('/staff')} /> : null}
           {isManager ? <Button kind="secondary" title="Owners & clients" onPress={() => router.push('/owners')} /> : null}
-          {isManager ? <Button kind="secondary" title="Dashboard" onPress={() => router.push('/dashboard')} /> : null}
         </Card>
 
         {features.task_board ? (

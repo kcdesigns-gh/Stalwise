@@ -428,25 +428,37 @@ export function IconStat({
   label,
   value,
   tone = 'blue',
+  onPress,
 }: {
   icon: IconName;
   label: string;
   value: string;
   tone?: 'blue' | 'gold' | 'green';
+  onPress?: () => void;
 }) {
-  return (
-    <View style={statStyles.row}>
+  const content = (
+    <>
       <View style={[statStyles.badge, statBadgeTones[tone]]}>
         <Icon name={icon} size={18} color={statIconColors[tone]} />
       </View>
       <View style={{ flex: 1 }}>
-        <AppText variant="small">{label}</AppText>
+        <AppText variant="small" numberOfLines={1}>
+          {label}
+        </AppText>
         <AppText variant="bodyStrong" numberOfLines={1}>
           {value}
         </AppText>
       </View>
-    </View>
+    </>
   );
+  if (onPress) {
+    return (
+      <Pressable accessibilityRole="link" onPress={onPress} style={({ pressed }) => [statStyles.row, pressed && { opacity: 0.7 }]}>
+        {content}
+      </Pressable>
+    );
+  }
+  return <View style={statStyles.row}>{content}</View>;
 }
 
 const statBadgeTones = StyleSheet.create({

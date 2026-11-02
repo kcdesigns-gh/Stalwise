@@ -67,7 +67,6 @@ function RootNavigator() {
         <Stack.Screen name="tasks" />
         <Stack.Screen name="training/[horseId]" />
         <Stack.Screen name="breeding/[horseId]" />
-        <Stack.Screen name="dashboard" />
         <Stack.Screen name="products" />
         <Stack.Screen name="feed-rate" />
         <Stack.Screen name="stall/[id]" />
