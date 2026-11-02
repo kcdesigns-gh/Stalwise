@@ -136,11 +136,13 @@ export default function HomeScreen() {
             />
           ) : null}
           {features.task_board ? (
-            <StatTile
-              label="Today's tasks"
-              value={data ? `${data.tasksDone} of ${data.tasksTotal}` : '–'}
-              note="done"
-            />
+            <Pressable accessibilityRole="link" onPress={() => router.push('/tasks')} style={{ flex: 1 }}>
+              <StatTile
+                label="Today's tasks"
+                value={data ? `${data.tasksDone} of ${data.tasksTotal}` : '–'}
+                note="done"
+              />
+            </Pressable>
           ) : null}
         </View>
 

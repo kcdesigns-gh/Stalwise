@@ -63,6 +63,11 @@ function RootNavigator() {
         <Stack.Screen name="feed-log/edit/[id]" />
         <Stack.Screen name="invoice/new" options={{ presentation: 'modal' }} />
         <Stack.Screen name="invoice/[id]" />
+        <Stack.Screen name="health/[horseId]" />
+        <Stack.Screen name="tasks" />
+        <Stack.Screen name="training/[horseId]" />
+        <Stack.Screen name="breeding/[horseId]" />
+        <Stack.Screen name="dashboard" />
         <Stack.Screen name="products" />
         <Stack.Screen name="feed-rate" />
         <Stack.Screen name="stall/[id]" />

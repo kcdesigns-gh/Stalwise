@@ -315,6 +315,33 @@ export default function HorseScreen() {
           </Card>
         ) : null}
 
+        {features.health_reminders ? (
+          <Card>
+            <AppText variant="heading" accessibilityRole="header">
+              Health
+            </AppText>
+            <Button kind="secondary" title="Reminders & care history" onPress={() => router.push({ pathname: '/health/[horseId]', params: { horseId: horse.id } })} />
+          </Card>
+        ) : null}
+
+        {seesStalls && features.training && horse.current_purpose !== 'broodstock' ? (
+          <Card>
+            <AppText variant="heading" accessibilityRole="header">
+              Training
+            </AppText>
+            <Button kind="secondary" title="Sessions, notes & shows" onPress={() => router.push({ pathname: '/training/[horseId]', params: { horseId: horse.id } })} />
+          </Card>
+        ) : null}
+
+        {seesStalls && features.breeding && horse.sex === 'mare' ? (
+          <Card>
+            <AppText variant="heading" accessibilityRole="header">
+              Breeding
+            </AppText>
+            <Button kind="secondary" title="Breeding record" onPress={() => router.push({ pathname: '/breeding/[horseId]', params: { horseId: horse.id } })} />
+          </Card>
+        ) : null}
+
         {canLogFeed && !isManager ? (
           <Card>
             <AppText variant="heading" accessibilityRole="header">
