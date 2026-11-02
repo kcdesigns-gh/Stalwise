@@ -91,6 +91,7 @@ export default function HorseScreen() {
   const [valuation, setValuation] = useState('');
   const [costPrice, setCostPrice] = useState('');
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [confirmArchive, setConfirmArchive] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -162,6 +163,23 @@ export default function HorseScreen() {
     else setCostPrice('');
     await reload();
     setSaving(false);
+  };
+
+  const archiveHorse = async () => {
+    if (confirmArchive !== 'go') {
+      setConfirmArchive('go');
+      return;
+    }
+    setActionError(null);
+    setSaving(true);
+    if (stallName) await supabase.rpc('remove_horse_from_stall', { horse: horse.id });
+    const { error: e } = await supabase.from('horses').update({ archived_at: new Date().toISOString() }).eq('id', horse.id);
+    if (e) {
+      setActionError(e.message);
+      setSaving(false);
+      return;
+    }
+    router.back();
   };
 
   const saveValuation = async () => {
@@ -348,9 +366,21 @@ export default function HorseScreen() {
         ) : null}
 
         <Card>
-          <AppText variant="heading" accessibilityRole="header">
-            Details
-          </AppText>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <AppText variant="heading" accessibilityRole="header">
+              Details
+            </AppText>
+            {isManager ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push({ pathname: '/horse/edit/[id]', params: { id: horse.id } })}
+                hitSlop={8}>
+                <AppText variant="small" color={Colors.royalBlue}>
+                  Edit
+                </AppText>
+              </Pressable>
+            ) : null}
+          </View>
           {isManager ? <DetailRow label="Owner" value={owner ? (owner.is_self ? `${owner.name} (own)` : owner.name) : '—'} /> : null}
           {isManager && ownHorse ? (
             <DetailRow
@@ -425,6 +455,30 @@ export default function HorseScreen() {
               placeholder="85000"
             />
             <Button kind="secondary" title="Save valuation" onPress={saveValuation} loading={saving} disabled={!valuation.trim()} />
+          </Card>
+        ) : null}
+
+        {isManager ? (
+          <Card>
+            <AppText variant="heading" accessibilityRole="header">
+              Leaving the yard
+            </AppText>
+            <Button
+              kind="secondary"
+              title="Sell this horse"
+              onPress={() => router.push({ pathname: '/horse/sell/[id]', params: { id: horse.id } })}
+            />
+            <Button
+              kind="secondary"
+              title={confirmArchive ? 'Tap again to archive' : 'Archive (left without a sale)'}
+              onPress={archiveHorse}
+              loading={saving && confirmArchive === 'go'}
+            />
+            {confirmArchive ? (
+              <AppText variant="small" color={Colors.danger}>
+                This removes {horse.name} from the active list. Its history and costs stay on record.
+              </AppText>
+            ) : null}
           </Card>
         ) : null}
       </ScrollView>

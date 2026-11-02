@@ -2731,6 +2731,19 @@ export type Database = {
         Args: { bid: string; for_month: string }
         Returns: Json
       }
+      sell_horse: {
+        Args: {
+          buyer_name?: string
+          buyer_owner_id?: string
+          commission_percent?: number
+          horse: string
+          notes?: string
+          on_behalf_of_client?: boolean
+          sale_price: number
+          sold_on: string
+        }
+        Returns: string
+      }
       set_daily_feed_rate: {
         Args: { bid: string; from_date: string; rate: number }
         Returns: undefined

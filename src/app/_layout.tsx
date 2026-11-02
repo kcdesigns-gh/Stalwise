@@ -49,6 +49,8 @@ function RootNavigator() {
       <Stack.Protected guard={hasBusiness && !recovering}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="horse/[id]" />
+        <Stack.Screen name="horse/edit/[id]" />
+        <Stack.Screen name="horse/sell/[id]" />
         <Stack.Screen name="photo/[id]" />
         <Stack.Screen name="horse/new" options={{ presentation: 'modal' }} />
         <Stack.Screen name="business" />
