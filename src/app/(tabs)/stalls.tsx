@@ -106,7 +106,14 @@ export default function StallsScreen() {
       <BlueHeader
         title="Stalls"
         subtitle={data && training.length ? `${inUse} of ${training.length} training stalls in use` : undefined}
-        right={isManager ? <HeaderIconButton icon="add" label="Add to waiting list" onPress={() => router.push('/waiting/new')} /> : null}
+        right={
+          isManager ? (
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <HeaderIconButton icon="more" label="Manage stalls" onPress={() => router.push('/stall/manage')} />
+              <HeaderIconButton icon="add" label="Add to waiting list" onPress={() => router.push('/waiting/new')} />
+            </View>
+          ) : null
+        }
       />
       {loading && !data ? (
         <Loading />
