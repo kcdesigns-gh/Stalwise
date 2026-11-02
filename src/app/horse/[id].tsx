@@ -58,7 +58,7 @@ export default function HorseScreen() {
       isManager
         ? supabase
             .from('cost_entries')
-            .select('id, cost_on, description, amount, source, billable, cost_categories(name)')
+            .select('id, cost_on, description, amount, source, source_id, billable, cost_categories(name)')
             .eq('horse_id', id)
             .order('cost_on', { ascending: false })
             .order('created_at', { ascending: false })
@@ -82,6 +82,7 @@ export default function HorseScreen() {
         description: string | null;
         amount: number;
         source: string;
+        source_id: string | null;
         billable: boolean;
         cost_categories: { name: string } | null;
       }[]),
@@ -330,8 +331,15 @@ export default function HorseScreen() {
               Costs
             </AppText>
             {costs.length === 0 ? <AppText muted>No costs logged yet.</AppText> : null}
-            {costs.map((c, i) => (
-              <View key={c.id} style={[styles.costRow, i < costs.length - 1 && styles.costDivider]}>
+            {costs.map((c, i) => {
+              const editable = c.source === 'manual' || c.source === 'feed_log';
+              const editTarget = c.source === 'manual' ? { pathname: '/cost/edit/[id]' as const, params: { id: c.id } } : { pathname: '/feed-log/edit/[id]' as const, params: { id: c.source_id ?? '' } };
+              return (
+              <Pressable
+                key={c.id}
+                disabled={!editable}
+                onPress={() => editable && router.push(editTarget)}
+                style={[styles.costRow, i < costs.length - 1 && styles.costDivider]}>
                 <View style={{ flex: 1, gap: 2 }}>
                   <AppText variant="bodyStrong" numberOfLines={2}>
                     {c.description ?? c.cost_categories?.name ?? 'Cost'}
@@ -339,6 +347,7 @@ export default function HorseScreen() {
                   <AppText variant="small">
                     {formatDate(c.cost_on)} · {c.cost_categories?.name ?? 'Cost'}
                     {c.billable ? ' · on invoice' : ''}
+                    {editable ? ' · tap to edit' : ''}
                   </AppText>
                 </View>
                 <View style={{ alignItems: 'flex-end', gap: 4 }}>
@@ -357,8 +366,9 @@ export default function HorseScreen() {
                     </Pressable>
                   ) : null}
                 </View>
-              </View>
-            ))}
+              </Pressable>
+              );
+            })}
             <Button icon="add" title="Log medicine or other cost" onPress={() => router.push({ pathname: '/log/[horseId]', params: { horseId: horse.id, mode: 'cost' } })} />
             <Button kind="secondary" title="Log extra feed" onPress={() => router.push({ pathname: '/log/[horseId]', params: { horseId: horse.id, mode: 'feed' } })} />
             <AppText variant="small">Everyday feed is charged automatically at the daily feed rate. Log only extras here.</AppText>

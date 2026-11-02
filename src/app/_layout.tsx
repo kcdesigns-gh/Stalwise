@@ -58,6 +58,9 @@ function RootNavigator() {
         <Stack.Screen name="owners" />
         <Stack.Screen name="owner/[id]" />
         <Stack.Screen name="owner/new" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="shared-costs" />
+        <Stack.Screen name="cost/edit/[id]" />
+        <Stack.Screen name="feed-log/edit/[id]" />
         <Stack.Screen name="products" />
         <Stack.Screen name="feed-rate" />
         <Stack.Screen name="stall/[id]" />

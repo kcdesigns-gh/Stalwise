@@ -69,6 +69,7 @@ export default function MoreScreen() {
             </AppText>
             <Button title="Daily feed rate" onPress={() => router.push('/feed-rate')} />
             <Button kind="secondary" title="Products & prices" onPress={() => router.push('/products')} />
+            <Button kind="secondary" title="Shared costs (rent, wages)" onPress={() => router.push('/shared-costs')} />
           </Card>
         ) : null}
 
