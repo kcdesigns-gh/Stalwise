@@ -3,7 +3,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, Badge, BlueHeader, Button, Card, EmptyState, ErrorText, HeaderIconButton, Loading } from '@/components/ui';
-import { Colors, ContentMaxWidth, Spacing } from '@/constants/theme';
+import { Colors, WideContentMaxWidth, Spacing } from '@/constants/theme';
 import { loadProducts, priceSummary, PRODUCT_CATEGORY_CODES } from '@/lib/products';
 import { useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
@@ -43,6 +43,7 @@ export default function ProductsScreen() {
         subtitle={data ? `${data.length} product${data.length === 1 ? '' : 's'}` : undefined}
         showBack
         right={<HeaderIconButton icon="add" label="Add a product" onPress={add} />}
+        wide
       />
       {loading && !data ? (
         <Loading />
@@ -95,7 +96,7 @@ export default function ProductsScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md },
+  content: { width: '100%', maxWidth: WideContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: 10, minHeight: 56 },
   divider: { borderBottomWidth: 1, borderBottomColor: Colors.divider },
 });

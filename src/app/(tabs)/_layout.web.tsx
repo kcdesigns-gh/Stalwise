@@ -1,18 +1,10 @@
-// Web version of the tab bar (office browsers). Same tabs and role rules as
-// the phone version, drawn as a plain bottom bar in the Stalwise colours.
+// Web version of the tab routes (office browsers). The persistent top nav
+// lives in the root layout now, so this just keeps the route group working
+// without drawing a second (bottom) bar underneath it.
 import { Tabs } from 'expo-router/tabs';
-import type { ColorValue } from 'react-native';
 
-import { Icon, type IconName } from '@/components/icon';
-import { Colors, Fonts } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 import { useBusiness } from '@/providers/business';
-
-function tabIcon(name: IconName) {
-  function TabIcon({ color }: { color: ColorValue }) {
-    return <Icon name={name} color={color} size={24} />;
-  }
-  return TabIcon;
-}
 
 export default function WebTabsLayout() {
   const { isManager, role } = useBusiness();
@@ -22,17 +14,14 @@ export default function WebTabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.royalBlue,
-        tabBarInactiveTintColor: Colors.textMuted,
-        tabBarLabelStyle: { fontFamily: Fonts.bold, fontSize: 12 },
-        tabBarStyle: { backgroundColor: Colors.surface, borderTopColor: Colors.border, height: 64 },
+        tabBarStyle: { display: 'none' },
         sceneStyle: { backgroundColor: Colors.background },
       }}>
-      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: tabIcon('home') }} />
-      <Tabs.Screen name="horses" options={{ title: 'Horses', tabBarIcon: tabIcon('horses') }} />
-      <Tabs.Screen name="stalls" options={{ title: 'Stalls', tabBarIcon: tabIcon('stalls'), href: seesStalls ? undefined : null }} />
-      <Tabs.Screen name="invoices" options={{ title: 'Invoices', tabBarIcon: tabIcon('invoices'), href: isManager ? undefined : null }} />
-      <Tabs.Screen name="more" options={{ title: 'More', tabBarIcon: tabIcon('more') }} />
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="horses" options={{ title: 'Horses' }} />
+      <Tabs.Screen name="stalls" options={{ title: 'Stalls', href: seesStalls ? undefined : null }} />
+      <Tabs.Screen name="invoices" options={{ title: 'Invoices', href: isManager ? undefined : null }} />
+      <Tabs.Screen name="more" options={{ title: 'More' }} />
     </Tabs>
   );
 }

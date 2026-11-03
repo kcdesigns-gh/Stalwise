@@ -50,3 +50,6 @@ export const TabBarClearance = 96;
 
 /** Widest the content column gets on a tablet or office screen. */
 export const ContentMaxWidth = 760;
+
+/** Widest the top nav bar and wide (grid) screens get on a big office monitor. */
+export const WideContentMaxWidth = 1180;

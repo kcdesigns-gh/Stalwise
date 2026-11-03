@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Badge, BlueHeader, EmptyState, ErrorText, HeaderIconButton, Loading } from '@/components/ui';
-import { Colors, ContentMaxWidth, Radius, Spacing, TabBarClearance } from '@/constants/theme';
+import { Colors, WideContentMaxWidth, Radius, Spacing, TabBarClearance } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
@@ -49,6 +49,7 @@ export default function OwnersScreen() {
         subtitle={data ? `${data.length} on file` : undefined}
         showBack
         right={<HeaderIconButton icon="add" label="Add an owner" onPress={() => router.push('/owner/new')} />}
+        wide
       />
       <FlatList
         data={data ?? []}
@@ -76,7 +77,7 @@ export default function OwnersScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: 10, paddingBottom: TabBarClearance },
+  list: { width: '100%', maxWidth: WideContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: 10, paddingBottom: TabBarClearance },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

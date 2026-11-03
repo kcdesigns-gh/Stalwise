@@ -15,7 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/icon';
-import { Colors, ContentMaxWidth, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, ContentMaxWidth, Fonts, Radius, Spacing, WideContentMaxWidth } from '@/constants/theme';
 
 // ---------------------------------------------------------------------------
 // Text
@@ -86,6 +86,7 @@ export function BlueHeader({
   logo,
   right,
   showBack,
+  wide,
   children,
 }: {
   title: string;
@@ -93,12 +94,14 @@ export function BlueHeader({
   logo?: ReactNode;
   right?: ReactNode;
   showBack?: boolean;
+  /** Matches the wider content column used by list/dashboard screens on a big screen. */
+  wide?: boolean;
   children?: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
-      <View style={styles.headerInner}>
+      <View style={[styles.headerInner, wide && { maxWidth: WideContentMaxWidth }]}>
       <View style={styles.headerRow}>
         {showBack ? (
           <Pressable

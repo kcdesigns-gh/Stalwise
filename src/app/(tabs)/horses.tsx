@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, TextInput, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
 
 import {
   AppText,
@@ -13,7 +13,7 @@ import {
   LogoMark,
   Button,
 } from '@/components/ui';
-import { Colors, ContentMaxWidth, Fonts, Radius, Spacing, TabBarClearance } from '@/constants/theme';
+import { Colors, WideContentMaxWidth, Fonts, Radius, Spacing, TabBarClearance } from '@/constants/theme';
 import { ageFrom, PURPOSE_LABELS, SEX_LABELS } from '@/lib/labels';
 import { loadAvatarUrls } from '@/lib/photos';
 import { supabase, type HorsePurpose } from '@/lib/supabase';
@@ -27,6 +27,8 @@ export default function HorsesScreen() {
   const bid = business!.id;
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
+  const { width } = useWindowDimensions();
+  const numColumns = width >= 1300 ? 3 : width >= 820 ? 2 : 1;
 
   const { data, error, loading, refreshing, reload } = useScreenData(async () => {
     const [horses, avatars] = await Promise.all([
@@ -64,7 +66,8 @@ export default function HorsesScreen() {
       <BlueHeader
         title="Horses"
         subtitle={horses ? `${horses.length} on the yard` : undefined}
-        right={isManager ? <HeaderIconButton icon="add" label="Add a horse" onPress={() => router.push('/horse/new')} /> : null}>
+        right={isManager ? <HeaderIconButton icon="add" label="Add a horse" onPress={() => router.push('/horse/new')} /> : null}
+        wide>
         <TextInput
           value={search}
           onChangeText={setSearch}
@@ -100,8 +103,11 @@ export default function HorsesScreen() {
         <Loading />
       ) : (
         <FlatList
+          key={numColumns}
           data={shown}
           keyExtractor={(h) => h.id}
+          numColumns={numColumns}
+          columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.royalBlue} />}
           ListHeaderComponent={<ErrorText message={error} />}
@@ -122,7 +128,7 @@ export default function HorsesScreen() {
                 <Pressable
                   accessibilityRole="link"
                   onPress={() => router.push({ pathname: '/horse/[id]', params: { id: item.id } })}
-                  style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]}>
+                  style={({ pressed }) => [styles.row, numColumns > 1 && { flex: 1 }, pressed && { opacity: 0.8 }]}>
                   <LogoMark name={item.name} uri={avatars[item.id]} size={48} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <AppText variant="bodyStrong" numberOfLines={1}>
@@ -163,7 +169,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   filterSelected: { backgroundColor: Colors.gold, borderColor: Colors.gold },
-  list: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: 10, paddingBottom: TabBarClearance },
+  list: { width: '100%', maxWidth: WideContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: 10, paddingBottom: TabBarClearance },
+  columnWrapper: { gap: 10 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

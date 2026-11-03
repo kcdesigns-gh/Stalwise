@@ -12,7 +12,7 @@ import {
   LogoMark,
   StatTile,
 } from '@/components/ui';
-import { Colors, ContentMaxWidth, Spacing, TabBarClearance } from '@/constants/theme';
+import { Colors, WideContentMaxWidth, Spacing, TabBarClearance } from '@/constants/theme';
 import { formatDate, formatMoney, formatMoneyShort, todayIso } from '@/lib/format';
 import { loadAvatarUrls } from '@/lib/photos';
 import { supabase } from '@/lib/supabase';
@@ -164,6 +164,7 @@ export default function HomeScreen() {
         title={business!.name}
         subtitle={firstName ? `${greeting()}, ${firstName}` : greeting()}
         logo={<LogoMark name={business!.name} uri={logoUrl} />}
+        wide
       />
       <ScrollView
         contentContainerStyle={styles.content}
@@ -281,7 +282,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md, paddingBottom: TabBarClearance },
+  content: { width: '100%', maxWidth: WideContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md, paddingBottom: TabBarClearance },
   grid: { flexDirection: 'row', gap: 10 },
   heroRow: { gap: 2 },
   heroFigure: { fontSize: 34 },

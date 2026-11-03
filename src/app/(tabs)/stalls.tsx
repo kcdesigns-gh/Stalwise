@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText, BlueHeader, Button, Card, EmptyState, ErrorText, HeaderIconButton, Loading } from '@/components/ui';
-import { Colors, ContentMaxWidth, Radius, Spacing, TabBarClearance } from '@/constants/theme';
+import { Colors, WideContentMaxWidth, Radius, Spacing, TabBarClearance } from '@/constants/theme';
 import { formatDate } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
@@ -106,6 +106,7 @@ export default function StallsScreen() {
       <BlueHeader
         title="Stalls"
         subtitle={data && training.length ? `${inUse} of ${training.length} training stalls in use` : undefined}
+        wide
         right={
           isManager ? (
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -261,7 +262,7 @@ function StallCard({ stall, onPress }: { stall: StallView; onPress: () => void }
 }
 
 const styles = StyleSheet.create({
-  content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md, paddingBottom: TabBarClearance },
+  content: { width: '100%', maxWidth: WideContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md, paddingBottom: TabBarClearance },
   suggestion: {
     backgroundColor: Colors.lightGold,
     borderWidth: 1.5,
