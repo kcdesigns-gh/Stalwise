@@ -109,11 +109,68 @@ export default function MoreScreen() {
           <Button kind="secondary" title="Sign out" onPress={signOut} />
         </Card>
 
+        <DeleteAccountCard />
+
         <Text style={styles.footer}>
           Powered by Stal<Text style={{ color: Colors.mutedGold }}>wise</Text> · version {Constants.expoConfig?.version ?? '—'}
         </Text>
       </ScrollView>
     </View>
+  );
+}
+
+function DeleteAccountCard() {
+  const { signOut } = useAuth();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const deleteAccount = async () => {
+    if (!confirming) {
+      setError(null);
+      setConfirming(true);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    const { error: invokeError } = await supabase.functions.invoke('delete-account', { method: 'POST' });
+    if (invokeError) {
+      let message = invokeError.message;
+      const context = (invokeError as { context?: Response }).context;
+      if (context && typeof context.json === 'function') {
+        try {
+          const body = (await context.json()) as { error?: string };
+          if (body?.error) message = body.error;
+        } catch {
+          // Response body wasn't JSON; fall back to the generic message above.
+        }
+      }
+      setError(message);
+      setBusy(false);
+      setConfirming(false);
+      return;
+    }
+    await signOut();
+  };
+
+  return (
+    <Card>
+      <AppText variant="heading" accessibilityRole="header" color={Colors.danger}>
+        Delete account
+      </AppText>
+      <AppText variant="small">
+        Permanently deletes your login. Horses, costs and invoices you created stay with the business — only your
+        own sign-in goes. A Manager can&rsquo;t do this while others are still on the team; make someone else the
+        Manager first.
+      </AppText>
+      <ErrorText message={error} />
+      <Button
+        kind="secondary"
+        title={confirming ? 'Tap again to permanently delete' : 'Delete my account'}
+        onPress={deleteAccount}
+        loading={busy}
+      />
+    </Card>
   );
 }
 

@@ -8,6 +8,7 @@ Horse business management app (stables, studs, trading yards). Built first for K
 ## Stack
 - Expo SDK 58, Expo Router (routes in `src/app/`), TypeScript strict, native tabs (`expo-router/native-tabs`).
 - Supabase project `mncdudqpngabgokgwdwy` (London). Schema lives in `supabase/migrations/`; generated types in `src/types/database.ts`.
+- Edge Functions (`supabase/functions/`) are for the one thing RLS can't do client-side: anything needing the service-role key (e.g. deleting an auth user). Deploy with the Supabase MCP tool, not the CLI. `tsconfig.json`/`eslint.config.js` exclude this folder — it's Deno, not the app.
 - Offline sync with PowerSync is planned, not built yet.
 
 ## Rules
