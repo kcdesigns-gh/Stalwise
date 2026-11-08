@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { router } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -10,10 +11,14 @@ import {
   IconStat,
   IconStatGrid,
   LogoMark,
+  PLBreakdown,
+  Segmented,
+  StatFigure,
   StatTile,
 } from '@/components/ui';
 import { Colors, WideContentMaxWidth, Spacing, TabBarClearance } from '@/constants/theme';
 import { formatDate, formatMoney, formatMoneyShort, todayIso } from '@/lib/format';
+import { PURPOSE_LABELS } from '@/lib/labels';
 import { loadAvatarUrls } from '@/lib/photos';
 import { supabase } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
@@ -21,7 +26,16 @@ import { useAuth } from '@/providers/auth';
 import { useBusiness } from '@/providers/business';
 
 type DueItem = { id: string; horseId: string; horseName: string; careType: string; dueOn: string };
-type TopHorse = { horseId: string; name: string; profit: number };
+type HorsePL = {
+  horseId: string;
+  name: string;
+  typeLabel: string;
+  isOwnStock: boolean;
+  month: number;
+  lifetime: number;
+  projected: number | null;
+};
+type OwnerFilter = 'all' | 'own' | 'client';
 
 function addDays(iso: string, days: number): string {
   const d = new Date(`${iso}T00:00:00Z`);
@@ -51,13 +65,18 @@ export default function HomeScreen() {
   const currency = business!.currency_code;
   const firstName = (session?.user.user_metadata?.full_name as string | undefined)?.split(' ')[0];
   const seesStalls = role === 'manager' || role === 'trainer';
+  const [ownerFilter, setOwnerFilter] = useState<OwnerFilter>('all');
 
   const { data, error, refreshing, reload } = useScreenData(async () => {
     const today = todayIso();
     const weekAhead = addDays(today, 7);
 
     const [horses, stalls, assignments, care, tasks] = await Promise.all([
-      supabase.from('horses').select('id, name, current_owner_id', { count: 'exact' }).eq('business_id', bid).is('archived_at', null),
+      supabase
+        .from('horses')
+        .select('id, name, current_owner_id, current_purpose', { count: 'exact' })
+        .eq('business_id', bid)
+        .is('archived_at', null),
       seesStalls
         ? supabase.from('stalls').select('id, kind, capacity').eq('business_id', bid).eq('active', true)
         : Promise.resolve({ data: [], error: null }),
@@ -85,16 +104,23 @@ export default function HomeScreen() {
     let totalIncome = 0;
     let totalCost = 0;
     let totalProfit = 0;
+    let monthProfitTotal = 0;
+    let projectedProfitTotal = 0;
     let categoryBreakdown: { label: string; value: number }[] = [];
-    let top: TopHorse[] = [];
+    let horsePL: HorsePL[] = [];
     let avatars: Record<string, string> = {};
 
     if (isManager) {
       const horseRows = must(horses) ?? [];
-      const [open, profit, costs, avatarMap] = await Promise.all([
+      const [open, profit, profitMonth, costs, owners, avatarMap] = await Promise.all([
         supabase.from('invoices').select('id').eq('business_id', bid).in('status', ['sent', 'part_paid']),
-        supabase.from('horse_profitability').select('horse_id, total_income, total_cost, profit, feed_costs').eq('business_id', bid),
+        supabase
+          .from('horse_profitability')
+          .select('horse_id, total_income, total_cost, profit, feed_costs, is_own_stock, latest_valuation, projected_profit')
+          .eq('business_id', bid),
+        supabase.from('horse_profitability_month').select('horse_id, profit').eq('business_id', bid),
         supabase.from('cost_entries').select('amount, source, cost_categories(name)').eq('business_id', bid).neq('source', 'feed_rate'),
+        supabase.from('owners').select('id, name').eq('business_id', bid),
         loadAvatarUrls(bid).catch(() => ({}) as Record<string, string>),
       ]);
       avatars = avatarMap;
@@ -107,16 +133,38 @@ export default function HomeScreen() {
       }
 
       const profitRows = must(profit) ?? [];
+      const monthRows = must(profitMonth) ?? [];
       totalIncome = profitRows.reduce((sum, p) => sum + Number(p.total_income), 0);
       totalCost = profitRows.reduce((sum, p) => sum + Number(p.total_cost), 0);
       totalProfit = profitRows.reduce((sum, p) => sum + Number(p.profit), 0);
       const totalFeed = profitRows.reduce((sum, p) => sum + Number(p.feed_costs ?? 0), 0);
+      monthProfitTotal = monthRows.reduce((sum, p) => sum + Number(p.profit), 0);
+      projectedProfitTotal = profitRows.reduce(
+        (sum, p) => sum + (p.is_own_stock && p.projected_profit != null ? Number(p.projected_profit) : 0),
+        0,
+      );
 
-      const byId = new Map(horseRows.map((h) => [h.id, h.name]));
-      top = [...profitRows]
-        .sort((a, b) => Number(b.profit) - Number(a.profit))
-        .slice(0, 3)
-        .map((p) => ({ horseId: p.horse_id ?? '', name: byId.get(p.horse_id ?? '') ?? 'Horse', profit: Number(p.profit) }));
+      const byId = new Map(horseRows.map((h) => [h.id, h]));
+      const monthById = new Map(monthRows.map((m) => [m.horse_id, Number(m.profit)]));
+      const ownerById = new Map((must(owners) ?? []).map((o) => [o.id, o.name]));
+      horsePL = profitRows
+        .map((p): HorsePL | null => {
+          const horse = p.horse_id ? byId.get(p.horse_id) : undefined;
+          if (!horse) return null;
+          const purposeLabel = PURPOSE_LABELS[horse.current_purpose];
+          const whoLabel = p.is_own_stock ? 'Own stock' : (horse.current_owner_id ? ownerById.get(horse.current_owner_id) : null) ?? 'Client';
+          return {
+            horseId: p.horse_id ?? '',
+            name: horse.name,
+            typeLabel: `${purposeLabel} · ${whoLabel}`,
+            isOwnStock: !!p.is_own_stock,
+            month: monthById.get(p.horse_id ?? '') ?? 0,
+            lifetime: Number(p.profit),
+            projected: p.is_own_stock && p.projected_profit != null ? Number(p.projected_profit) : null,
+          };
+        })
+        .filter((h): h is HorsePL => h !== null)
+        .sort((a, b) => a.lifetime - b.lifetime);
 
       const byCategory = new Map<string, number>();
       for (const c of must(costs) ?? []) {
@@ -148,8 +196,10 @@ export default function HomeScreen() {
       totalIncome,
       totalCost,
       totalProfit,
+      monthProfitTotal,
+      projectedProfitTotal,
       categoryBreakdown,
-      top,
+      horsePL,
       avatars,
       due,
       tasksTotal: taskRows.length,
@@ -173,16 +223,43 @@ export default function HomeScreen() {
 
         {isManager ? (
           <>
+            <View style={{ gap: 4 }}>
+              <AppText variant="heading" accessibilityRole="header">
+                Profit &amp; loss overview
+              </AppText>
+              <AppText variant="small" muted>
+                Three views of the same number, so a horse that hasn&apos;t sold yet doesn&apos;t look worse than it really is.
+              </AppText>
+            </View>
+
+            <PLBreakdown
+              items={[
+                {
+                  label: 'This month',
+                  value: data ? formatMoney(data.monthProfitTotal, currency) : '–',
+                  tone: !data ? 'muted' : data.monthProfitTotal >= 0 ? 'pos' : 'neg',
+                  note: 'Invoiced revenue minus logged costs',
+                  bar: Colors.royalBlue,
+                },
+                {
+                  label: 'Lifetime (actual)',
+                  value: data ? formatMoney(data.totalProfit, currency) : '–',
+                  tone: !data ? 'muted' : data.totalProfit >= 0 ? 'pos' : 'neg',
+                  note: 'Realised revenue minus total cost since entry',
+                  bar: Colors.deepBlue,
+                },
+                {
+                  label: 'Projected',
+                  value: data ? formatMoney(data.projectedProfitTotal, currency) : '–',
+                  tone: !data ? 'muted' : data.projectedProfitTotal >= 0 ? 'pos' : 'neg',
+                  note: 'Valuation minus cost to date — own stock only',
+                  bar: Colors.gold,
+                },
+              ]}
+            />
+
             <Card gold>
-              <View style={styles.heroRow}>
-                <AppText variant="label">Total profit</AppText>
-                <AppText variant="title" color={data && data.totalProfit < 0 ? Colors.danger : Colors.success} style={styles.heroFigure}>
-                  {data ? formatMoney(data.totalProfit, currency) : '–'}
-                </AppText>
-              </View>
               <IconStatGrid>
-                <IconStat icon="trend" tone="gold" label="Income" value={data ? formatMoneyShort(data.totalIncome, currency) : '–'} />
-                <IconStat icon="tag" tone="blue" label="Full cost" value={data ? formatMoneyShort(data.totalCost, currency) : '–'} />
                 <IconStat icon="horses" tone="blue" label="Horses on yard" value={String(data?.horseCount ?? '–')} />
                 {seesStalls ? (
                   <IconStat icon="stalls" tone="blue" label="Stall occupancy" value={data ? `${data.usedStalls} of ${data.trainingStalls}` : '–'} />
@@ -214,24 +291,52 @@ export default function HomeScreen() {
               </Card>
             ) : null}
 
-            {data && data.top.length > 0 ? (
+            {data && data.horsePL.length > 0 ? (
               <Card>
                 <AppText variant="heading" accessibilityRole="header">
-                  Most profitable horses
+                  Horses — profit &amp; loss
                 </AppText>
-                {data.top.map((t, i) => (
-                  <Pressable
-                    key={t.horseId}
-                    accessibilityRole="link"
-                    onPress={() => router.push({ pathname: '/horse/[id]', params: { id: t.horseId } })}
-                    style={[styles.horseRow, i < data.top.length - 1 && styles.divider]}>
-                    <LogoMark name={t.name} uri={data.avatars[t.horseId]} size={36} />
-                    <AppText style={{ flex: 1 }}>{t.name}</AppText>
-                    <AppText variant="bodyStrong" color={t.profit >= 0 ? Colors.success : Colors.danger}>
-                      {formatMoney(t.profit, currency)}
-                    </AppText>
-                  </Pressable>
-                ))}
+                <Segmented
+                  label="Show"
+                  value={ownerFilter}
+                  onChange={setOwnerFilter}
+                  options={[
+                    { value: 'all', label: `All (${data.horsePL.length})` },
+                    { value: 'own', label: `Own stock (${data.horsePL.filter((h) => h.isOwnStock).length})` },
+                    { value: 'client', label: `Client (${data.horsePL.filter((h) => !h.isOwnStock).length})` },
+                  ]}
+                />
+                {data.horsePL
+                  .filter((h) => (ownerFilter === 'all' ? true : ownerFilter === 'own' ? h.isOwnStock : !h.isOwnStock))
+                  .map((h, i, arr) => (
+                    <Pressable
+                      key={h.horseId}
+                      accessibilityRole="link"
+                      onPress={() => router.push({ pathname: '/horse/[id]', params: { id: h.horseId } })}
+                      style={[styles.horsePLRow, i < arr.length - 1 && styles.divider]}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                        <LogoMark name={h.name} uri={data.avatars[h.horseId]} size={36} />
+                        <View style={{ flex: 1 }}>
+                          <AppText variant="bodyStrong">{h.name}</AppText>
+                          <AppText variant="small" muted>
+                            {h.typeLabel}
+                          </AppText>
+                        </View>
+                      </View>
+                      <View style={styles.horsePLFigures}>
+                        <StatFigure label="This month" value={formatMoney(h.month, currency)} tone={h.month >= 0 ? 'pos' : 'neg'} />
+                        <StatFigure label="Lifetime" value={formatMoney(h.lifetime, currency)} tone={h.lifetime >= 0 ? 'pos' : 'neg'} />
+                        <StatFigure
+                          label="Projected"
+                          value={h.projected == null ? '—' : formatMoney(h.projected, currency)}
+                          tone={h.projected == null ? 'muted' : h.projected >= 0 ? 'pos' : 'neg'}
+                        />
+                      </View>
+                    </Pressable>
+                  ))}
+                <AppText variant="small" muted>
+                  Projected applies to Kimco&apos;s own-stock horses only. Client-owned horses are valued on fees invoiced, not a sale.
+                </AppText>
               </Card>
             ) : null}
           </>
@@ -284,9 +389,8 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: WideContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md, paddingBottom: TabBarClearance },
   grid: { flexDirection: 'row', gap: 10 },
-  heroRow: { gap: 2 },
-  heroFigure: { fontSize: 34 },
-  horseRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: 10 },
+  horsePLRow: { gap: Spacing.sm, paddingVertical: 12 },
+  horsePLFigures: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md, paddingLeft: 48 },
   dueRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: 10, minHeight: 44 },
   divider: { borderBottomWidth: 1, borderBottomColor: Colors.divider },
   dot: { width: 10, height: 10, borderRadius: 5 },

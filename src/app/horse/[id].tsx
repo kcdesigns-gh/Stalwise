@@ -17,11 +17,12 @@ import {
   IconStatGrid,
   Loading,
   LogoMark,
+  PLBreakdown,
   Segmented,
   TextField,
 } from '@/components/ui';
 import { Colors, ContentMaxWidth, Radius, Spacing } from '@/constants/theme';
-import { formatDate, formatMoney, formatMoneyShort, parseMoney, todayIso } from '@/lib/format';
+import { formatDate, formatMoney, parseMoney, todayIso } from '@/lib/format';
 import { ageFrom, PURPOSE_LABELS, SEX_LABELS } from '@/lib/labels';
 import { addHorsePhotos, loadHorsePhotos, pickHorsePhotos } from '@/lib/photos';
 import { supabase, type HorsePurpose } from '@/lib/supabase';
@@ -39,7 +40,7 @@ export default function HorseScreen() {
   const { data, error, loading, refreshing, reload } = useScreenData(async () => {
     const horse = must(await supabase.from('horses').select('*').eq('id', id).single());
 
-    const [photos, history, stall, owner, profit, purchase, costs] = await Promise.all([
+    const [photos, history, stall, owner, profit, profitMonth, purchase, costs] = await Promise.all([
       loadHorsePhotos(id).catch(() => []),
       supabase
         .from('horse_purpose_history')
@@ -54,6 +55,9 @@ export default function HorseScreen() {
         : Promise.resolve({ data: null, error: null }),
       isManager
         ? supabase.from('horse_profitability').select('*').eq('horse_id', id).maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      isManager
+        ? supabase.from('horse_profitability_month').select('profit').eq('horse_id', id).maybeSingle()
         : Promise.resolve({ data: null, error: null }),
       isManager
         ? supabase.from('cost_entries').select('amount').eq('horse_id', id).eq('source', 'purchase').maybeSingle()
@@ -78,6 +82,7 @@ export default function HorseScreen() {
       stallLeaving: (stall.data as { expected_end_on: string | null } | null)?.expected_end_on ?? null,
       owner: owner.data as { name: string; is_self: boolean } | null,
       profit: profit.data,
+      monthProfit: profitMonth.data ? Number((profitMonth.data as { profit: number }).profit) : 0,
       purchasePrice: purchase.data ? Number((purchase.data as { amount: number }).amount) : null,
       costs: ((costs.data ?? []) as {
         id: string;
@@ -112,7 +117,7 @@ export default function HorseScreen() {
     );
   }
 
-  const { horse, photos, history, stallName, stallSince, stallLeaving, owner, profit, purchasePrice, costs } = data;
+  const { horse, photos, history, stallName, stallSince, stallLeaving, owner, profit, monthProfit, purchasePrice, costs } = data;
   const facts = [horse.sex ? SEX_LABELS[horse.sex] : null, horse.colour, ageFrom(horse.date_of_birth)].filter(Boolean);
   const ownHorse = owner?.is_self ?? false;
   const canLogFeed = role === 'manager' || role === 'groom';
@@ -277,35 +282,68 @@ export default function HorseScreen() {
         </Card>
 
         {isManager && profit ? (
-          <Card gold>
-            <AppText variant="heading" accessibilityRole="header">
-              Profitability to date
-            </AppText>
-            <View style={styles.figures}>
-              <Figure label="Income" value={formatMoneyShort(profit.total_income, currency)} />
-              <Figure label="Full cost" value={formatMoneyShort(profit.total_cost, currency)} />
-              <Figure label="Profit" value={formatMoneyShort(profit.profit, currency)} />
-            </View>
-            <CostBreakdownBar
+          <View style={{ gap: Spacing.md }}>
+            <PLBreakdown
               items={[
-                { label: 'Logged costs', value: Number(profit.direct_costs) },
-                { label: `Feed (${profit.feed_days} day${profit.feed_days === 1 ? '' : 's'})`, value: Number(profit.feed_costs ?? 0) },
-                { label: 'Shared costs', value: Number(profit.shared_costs) },
+                {
+                  label: 'This month',
+                  value: formatMoney(monthProfit, currency),
+                  tone: monthProfit >= 0 ? 'pos' : 'neg',
+                  note: 'Revenue invoiced minus costs logged this month',
+                  bar: Colors.royalBlue,
+                },
+                {
+                  label: 'Lifetime (actual)',
+                  value: formatMoney(profit.profit, currency),
+                  tone: Number(profit.profit) >= 0 ? 'pos' : 'neg',
+                  note: `${formatMoney(profit.total_income, currency)} earned to date minus ${formatMoney(profit.total_cost, currency)} spent since entry`,
+                  bar: Colors.deepBlue,
+                },
+                {
+                  label: 'Projected',
+                  value: profit.is_own_stock && profit.projected_profit != null ? formatMoney(profit.projected_profit, currency) : '—',
+                  tone:
+                    profit.is_own_stock && profit.projected_profit != null
+                      ? Number(profit.projected_profit) >= 0
+                        ? 'pos'
+                        : 'neg'
+                      : 'muted',
+                  note:
+                    profit.is_own_stock && profit.projected_profit != null
+                      ? `${formatMoney(profit.latest_valuation, currency)} valuation minus ${formatMoney(profit.total_cost, currency)} spent since entry`
+                      : profit.is_own_stock
+                        ? 'Set a valuation below to see this'
+                        : 'Client horses are valued on fees, not a sale',
+                  bar: Colors.gold,
+                },
               ]}
-              formatValue={(v) => formatMoney(v, currency)}
             />
-            <DetailRow
-              label="Latest valuation"
-              value={profit.latest_valuation != null ? `${formatMoney(profit.latest_valuation, currency)} · ${formatDate(profit.latest_valuation_on)}` : 'None yet'}
-              last
-            />
-            {profit.feed_days === 0 ? (
-              <AppText variant="small">No daily feed rate is set yet, so feed is not being counted. Set it under More → Daily feed rate.</AppText>
-            ) : null}
-            {ownHorse && Number(profit.sale_income ?? 0) === 0 ? (
-              <AppText variant="small">Unsold own horses show no income until they are sold. The valuation is for reference only.</AppText>
-            ) : null}
-          </Card>
+
+            <Card>
+              <AppText variant="heading" accessibilityRole="header">
+                Cost breakdown since entry
+              </AppText>
+              <CostBreakdownBar
+                items={[
+                  { label: 'Logged costs', value: Number(profit.direct_costs) },
+                  { label: `Feed (${profit.feed_days} day${profit.feed_days === 1 ? '' : 's'})`, value: Number(profit.feed_costs ?? 0) },
+                  { label: 'Shared costs', value: Number(profit.shared_costs) },
+                ]}
+                formatValue={(v) => formatMoney(v, currency)}
+              />
+              <DetailRow
+                label="Latest valuation"
+                value={profit.latest_valuation != null ? `${formatMoney(profit.latest_valuation, currency)} · ${formatDate(profit.latest_valuation_on)}` : 'None yet'}
+                last
+              />
+              {profit.feed_days === 0 ? (
+                <AppText variant="small">No daily feed rate is set yet, so feed is not being counted. Set it under More → Daily feed rate.</AppText>
+              ) : null}
+              {ownHorse && Number(profit.sale_income ?? 0) === 0 ? (
+                <AppText variant="small">Unsold own horses show no sale income until they are sold. The valuation is for reference only.</AppText>
+              ) : null}
+            </Card>
+          </View>
         ) : null}
 
         {seesStalls ? (
@@ -549,17 +587,6 @@ export default function HorseScreen() {
   );
 }
 
-function Figure({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={{ flex: 1, gap: 2 }}>
-      <AppText variant="small">{label}</AppText>
-      <AppText variant="bodyStrong" style={{ fontSize: 16 }}>
-        {value}
-      </AppText>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   headerBadges: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md },
@@ -581,7 +608,6 @@ const styles = StyleSheet.create({
   },
   heroBadges: { flexDirection: 'row', gap: 6, paddingHorizontal: Spacing.lg, paddingBottom: 6 },
   heroCaption: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.lg },
-  figures: { flexDirection: 'row', gap: Spacing.sm },
   costRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: 10 },
   costDivider: { borderBottomWidth: 1, borderBottomColor: Colors.divider },
   photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },

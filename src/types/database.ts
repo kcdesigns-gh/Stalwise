@@ -126,6 +126,13 @@ export type Database = {
             foreignKeyName: "breeding_events_mare_id_business_id_fkey"
             columns: ["mare_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "horse_profitability_month"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "breeding_events_mare_id_business_id_fkey"
+            columns: ["mare_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "horses"
             referencedColumns: ["id", "business_id"]
           },
@@ -134,6 +141,13 @@ export type Database = {
             columns: ["stallion_id", "business_id"]
             isOneToOne: false
             referencedRelation: "horse_profitability"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "breeding_events_stallion_id_business_id_fkey"
+            columns: ["stallion_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "horse_profitability_month"
             referencedColumns: ["horse_id", "business_id"]
           },
           {
@@ -324,6 +338,13 @@ export type Database = {
             foreignKeyName: "care_events_horse_id_business_id_fkey"
             columns: ["horse_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "horse_profitability_month"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "care_events_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "horses"
             referencedColumns: ["id", "business_id"]
           },
@@ -382,6 +403,13 @@ export type Database = {
             columns: ["horse_id", "business_id"]
             isOneToOne: false
             referencedRelation: "horse_profitability"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "care_schedules_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "horse_profitability_month"
             referencedColumns: ["horse_id", "business_id"]
           },
           {
@@ -528,6 +556,13 @@ export type Database = {
             foreignKeyName: "cost_entries_horse_id_business_id_fkey"
             columns: ["horse_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "horse_profitability_month"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "cost_entries_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "horses"
             referencedColumns: ["id", "business_id"]
           },
@@ -663,6 +698,13 @@ export type Database = {
             foreignKeyName: "daily_tasks_horse_id_business_id_fkey"
             columns: ["horse_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "horse_profitability_month"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "daily_tasks_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "horses"
             referencedColumns: ["id", "business_id"]
           },
@@ -718,6 +760,13 @@ export type Database = {
             columns: ["horse_id", "business_id"]
             isOneToOne: false
             referencedRelation: "horse_profitability"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "feed_logs_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "horse_profitability_month"
             referencedColumns: ["horse_id", "business_id"]
           },
           {
@@ -843,6 +892,13 @@ export type Database = {
             foreignKeyName: "foalings_foal_id_business_id_fkey"
             columns: ["foal_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "horse_profitability_month"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "foalings_foal_id_business_id_fkey"
+            columns: ["foal_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "horses"
             referencedColumns: ["id", "business_id"]
           },
@@ -851,6 +907,13 @@ export type Database = {
             columns: ["mare_id", "business_id"]
             isOneToOne: false
             referencedRelation: "horse_profitability"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "foalings_mare_id_business_id_fkey"
+            columns: ["mare_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "horse_profitability_month"
             referencedColumns: ["horse_id", "business_id"]
           },
           {
@@ -909,6 +972,13 @@ export type Database = {
             columns: ["horse_id", "business_id"]
             isOneToOne: false
             referencedRelation: "horse_profitability"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "horse_ownership_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "horse_profitability_month"
             referencedColumns: ["horse_id", "business_id"]
           },
           {
@@ -983,6 +1053,13 @@ export type Database = {
             foreignKeyName: "horse_photos_horse_id_business_id_fkey"
             columns: ["horse_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "horse_profitability_month"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "horse_photos_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "horses"
             referencedColumns: ["id", "business_id"]
           },
@@ -1035,6 +1112,13 @@ export type Database = {
             columns: ["horse_id", "business_id"]
             isOneToOne: false
             referencedRelation: "horse_profitability"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "horse_purpose_history_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "horse_profitability_month"
             referencedColumns: ["horse_id", "business_id"]
           },
           {
@@ -1118,6 +1202,13 @@ export type Database = {
             foreignKeyName: "horse_sales_horse_id_business_id_fkey"
             columns: ["horse_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "horse_profitability_month"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "horse_sales_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "horses"
             referencedColumns: ["id", "business_id"]
           },
@@ -1176,6 +1267,13 @@ export type Database = {
             foreignKeyName: "horse_stays_horse_id_business_id_fkey"
             columns: ["horse_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "horse_profitability_month"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "horse_stays_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "horses"
             referencedColumns: ["id", "business_id"]
           },
@@ -1228,6 +1326,13 @@ export type Database = {
             columns: ["horse_id", "business_id"]
             isOneToOne: false
             referencedRelation: "horse_profitability"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "horse_valuations_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "horse_profitability_month"
             referencedColumns: ["horse_id", "business_id"]
           },
           {
@@ -1344,6 +1449,13 @@ export type Database = {
             foreignKeyName: "horses_dam_id_business_id_fkey"
             columns: ["dam_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "horse_profitability_month"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "horses_dam_id_business_id_fkey"
+            columns: ["dam_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "horses"
             referencedColumns: ["id", "business_id"]
           },
@@ -1352,6 +1464,13 @@ export type Database = {
             columns: ["sire_id", "business_id"]
             isOneToOne: false
             referencedRelation: "horse_profitability"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "horses_sire_id_business_id_fkey"
+            columns: ["sire_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "horse_profitability_month"
             referencedColumns: ["horse_id", "business_id"]
           },
           {
@@ -1432,6 +1551,13 @@ export type Database = {
             columns: ["horse_id", "business_id"]
             isOneToOne: false
             referencedRelation: "horse_profitability"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "invoice_lines_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "horse_profitability_month"
             referencedColumns: ["horse_id", "business_id"]
           },
           {
@@ -1611,6 +1737,13 @@ export type Database = {
             columns: ["horse_id", "business_id"]
             isOneToOne: false
             referencedRelation: "horse_profitability"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "message_log_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "horse_profitability_month"
             referencedColumns: ["horse_id", "business_id"]
           },
           {
@@ -2014,6 +2147,13 @@ export type Database = {
             foreignKeyName: "progress_notes_horse_id_business_id_fkey"
             columns: ["horse_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "horse_profitability_month"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "progress_notes_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "horses"
             referencedColumns: ["id", "business_id"]
           },
@@ -2090,6 +2230,13 @@ export type Database = {
             foreignKeyName: "recurring_charges_horse_id_business_id_fkey"
             columns: ["horse_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "horse_profitability_month"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "recurring_charges_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "horses"
             referencedColumns: ["id", "business_id"]
           },
@@ -2149,6 +2296,13 @@ export type Database = {
             columns: ["horse_id", "business_id"]
             isOneToOne: false
             referencedRelation: "horse_profitability"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "shared_cost_allocations_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "horse_profitability_month"
             referencedColumns: ["horse_id", "business_id"]
           },
           {
@@ -2276,6 +2430,13 @@ export type Database = {
             foreignKeyName: "show_entries_horse_id_business_id_fkey"
             columns: ["horse_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "horse_profitability_month"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "show_entries_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "horses"
             referencedColumns: ["id", "business_id"]
           },
@@ -2378,6 +2539,13 @@ export type Database = {
             columns: ["horse_id", "business_id"]
             isOneToOne: false
             referencedRelation: "horse_profitability"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "stall_assignments_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "horse_profitability_month"
             referencedColumns: ["horse_id", "business_id"]
           },
           {
@@ -2496,6 +2664,13 @@ export type Database = {
             foreignKeyName: "training_schedules_horse_id_business_id_fkey"
             columns: ["horse_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "horse_profitability_month"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "training_schedules_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "horses"
             referencedColumns: ["id", "business_id"]
           },
@@ -2554,6 +2729,13 @@ export type Database = {
             columns: ["horse_id", "business_id"]
             isOneToOne: false
             referencedRelation: "horse_profitability"
+            referencedColumns: ["horse_id", "business_id"]
+          },
+          {
+            foreignKeyName: "training_sessions_horse_id_business_id_fkey"
+            columns: ["horse_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "horse_profitability_month"
             referencedColumns: ["horse_id", "business_id"]
           },
           {
@@ -2645,11 +2827,31 @@ export type Database = {
           feed_days: number | null
           horse_id: string | null
           invoiced_income: number | null
+          is_own_stock: boolean | null
           latest_valuation: number | null
           latest_valuation_on: string | null
           profit: number | null
+          projected_profit: number | null
           sale_income: number | null
           shared_costs: number | null
+          total_cost: number | null
+          total_income: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horses_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horse_profitability_month: {
+        Row: {
+          business_id: string | null
+          horse_id: string | null
+          profit: number | null
           total_cost: number | null
           total_income: number | null
         }

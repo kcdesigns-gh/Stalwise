@@ -12,7 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform, View } from 'react-native';
 
-import { WebTopNav } from '@/components/web-nav';
+import { WebSidebarNav } from '@/components/web-nav';
 import { Colors } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/providers/auth';
 import { BusinessProvider, useBusiness } from '@/providers/business';
@@ -34,10 +34,12 @@ function RootNavigator() {
   const signedIn = !!session;
   const hasBusiness = signedIn && !!business;
 
+  const showSidebar = Platform.OS === 'web' && hasBusiness && !recovering;
+
   return (
-    <View style={{ flex: 1 }}>
-      {Platform.OS === 'web' && hasBusiness && !recovering ? <WebTopNav /> : null}
-      <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, flexDirection: showSidebar ? 'row' : 'column' }}>
+      {showSidebar ? <WebSidebarNav /> : null}
+      <View style={{ flex: 1, minWidth: 0 }}>
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
           <Stack.Protected guard={recovering}>
             <Stack.Screen name="reset-password" />

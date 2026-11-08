@@ -23,6 +23,7 @@ const ICONS = {
   gender: { ios: 'figure.stand', md: 'wc' },
   horseshoe: { ios: 'pawprint', md: 'pets' },
   pin: { ios: 'mappin.circle', md: 'place' },
+  logout: { ios: 'rectangle.portrait.and.arrow.right', md: 'logout' },
 } as const satisfies Record<string, { ios: SFSymbol; md: string }>;
 
 export type IconName = keyof typeof ICONS;

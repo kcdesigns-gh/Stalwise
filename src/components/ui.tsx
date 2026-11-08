@@ -545,6 +545,71 @@ const breakdownStyles = StyleSheet.create({
   dot: { width: 8, height: 8, borderRadius: 4 },
 });
 
+// ---------------------------------------------------------------------------
+// PLBreakdown: the three-way profit/loss view (this month / lifetime /
+// projected) used on the dashboard and on a horse's own page, so a horse
+// that simply hasn't sold yet doesn't read as a straight loss. "tone" picks
+// the figure's colour; "bar" is the top accent colour for that card.
+// ---------------------------------------------------------------------------
+
+export function PLBreakdown({
+  items,
+}: {
+  items: { label: string; value: string; tone: 'pos' | 'neg' | 'muted'; note?: string; bar: string }[];
+}) {
+  return (
+    <View style={plStyles.row}>
+      {items.map((item) => (
+        <View key={item.label} style={[plStyles.card, { borderTopColor: item.bar }]}>
+          <AppText variant="label">{item.label}</AppText>
+          <AppText
+            variant="figure"
+            color={item.tone === 'muted' ? Colors.textMuted : item.tone === 'pos' ? Colors.success : Colors.danger}
+            style={plStyles.figure}>
+            {item.value}
+          </AppText>
+          {item.note ? (
+            <AppText variant="small" muted>
+              {item.note}
+            </AppText>
+          ) : null}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+// A smaller single label/value pair, for a row of figures inside a list item
+// (e.g. a horse row's month/lifetime/projected trio) rather than a full card.
+export function StatFigure({ label, value, tone }: { label: string; value: string; tone?: 'pos' | 'neg' | 'muted' }) {
+  return (
+    <View style={{ gap: 2 }}>
+      <AppText variant="small">{label}</AppText>
+      <AppText
+        variant="bodyStrong"
+        color={tone === 'pos' ? Colors.success : tone === 'neg' ? Colors.danger : tone === 'muted' ? Colors.textMuted : undefined}
+        style={{ fontSize: 16 }}>
+        {value}
+      </AppText>
+    </View>
+  );
+}
+
+const plStyles = StyleSheet.create({
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
+  card: {
+    flexGrow: 1,
+    flexBasis: 150,
+    minWidth: 140,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    borderTopWidth: 4,
+    padding: Spacing.lg,
+    gap: 4,
+  },
+  figure: { fontSize: 22 },
+});
+
 const styles = StyleSheet.create({
   logoFallback: {
     borderWidth: 2,
