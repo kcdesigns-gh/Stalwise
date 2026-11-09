@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -142,6 +143,7 @@ export default function SignInScreen() {
               }}
             />
           )}
+          <Button kind="secondary" title="Privacy policy" onPress={() => router.push('/privacy')} />
         </Card>
       </ScrollView>
     </KeyboardAvoidingView>

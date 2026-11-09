@@ -1,10 +1,11 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { AppText, BlueHeader, Button, Card, DetailRow, ErrorText, LogoMark, ToggleRow } from '@/components/ui';
+import { AppText, BlueHeader, Button, Card, DetailRow, ErrorText, LogoMark, TextField, ToggleRow } from '@/components/ui';
 import { Colors, ContentMaxWidth, Fonts, Spacing, TabBarClearance } from '@/constants/theme';
+import { SUPPORT_EMAIL } from '@/constants/legal';
 import { ROLE_LABELS } from '@/lib/labels';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/providers/auth';
@@ -16,7 +17,6 @@ const FEATURE_LABELS: { key: Feature; label: string }[] = [
   { key: 'trading', label: 'Trading' },
   { key: 'health_reminders', label: 'Health reminders' },
   { key: 'task_board', label: 'Groom task board' },
-  { key: 'owner_updates', label: 'WhatsApp and email updates to owners' },
 ];
 
 export default function MoreScreen() {
@@ -109,6 +109,18 @@ export default function MoreScreen() {
           <Button kind="secondary" title="Sign out" onPress={signOut} />
         </Card>
 
+        <Card>
+          <AppText variant="heading" accessibilityRole="header">
+            Help and privacy
+          </AppText>
+          <Button kind="secondary" title="Privacy policy" onPress={() => router.push('/privacy')} />
+          <Button
+            kind="secondary"
+            title="Contact support"
+            onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
+          />
+        </Card>
+
         <DeleteAccountCard />
 
         <Text style={styles.footer}>
@@ -121,9 +133,16 @@ export default function MoreScreen() {
 
 function DeleteAccountCard() {
   const { signOut } = useAuth();
+  const { isManager, business } = useBusiness();
   const [confirming, setConfirming] = useState(false);
+  const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // A Manager's account can't be removed without deciding what happens to the
+  // business, so for them deleting the account deletes the business too.
+  const needsTyping = isManager;
+  const ready = !needsTyping || typed.trim() === 'DELETE';
 
   const deleteAccount = async () => {
     if (!confirming) {
@@ -131,9 +150,13 @@ function DeleteAccountCard() {
       setConfirming(true);
       return;
     }
+    if (!ready) return;
     setBusy(true);
     setError(null);
-    const { error: invokeError } = await supabase.functions.invoke('delete-account', { method: 'POST' });
+    const { error: invokeError } = await supabase.functions.invoke('delete-account', {
+      method: 'POST',
+      body: { deleteBusiness: isManager },
+    });
     if (invokeError) {
       let message = invokeError.message;
       const context = (invokeError as { context?: Response }).context;
@@ -148,6 +171,7 @@ function DeleteAccountCard() {
       setError(message);
       setBusy(false);
       setConfirming(false);
+      setTyped('');
       return;
     }
     await signOut();
@@ -158,18 +182,51 @@ function DeleteAccountCard() {
       <AppText variant="heading" accessibilityRole="header" color={Colors.danger}>
         Delete account
       </AppText>
-      <AppText variant="small">
-        Permanently deletes your login. Horses, costs and invoices you created stay with the business — only your
-        own sign-in goes. A Manager can&rsquo;t do this while others are still on the team; make someone else the
-        Manager first.
-      </AppText>
+      {isManager ? (
+        <AppText variant="small">
+          You are the Manager of {business?.name ?? 'this business'}. Deleting your account permanently deletes the
+          whole business too: every horse, photo, cost, invoice and your logo, for everyone on the team. This cannot
+          be undone.
+        </AppText>
+      ) : (
+        <AppText variant="small">
+          Permanently deletes your login. Horses, costs and invoices you created stay with the business &mdash; only
+          your own sign-in goes.
+        </AppText>
+      )}
+      {confirming && needsTyping ? (
+        <TextField
+          label="Type DELETE to confirm"
+          value={typed}
+          onChangeText={setTyped}
+          autoCapitalize="characters"
+          autoCorrect={false}
+        />
+      ) : null}
       <ErrorText message={error} />
       <Button
         kind="secondary"
-        title={confirming ? 'Tap again to permanently delete' : 'Delete my account'}
+        title={
+          !confirming
+            ? 'Delete my account'
+            : isManager
+              ? 'Permanently delete account and business'
+              : 'Tap again to permanently delete'
+        }
         onPress={deleteAccount}
         loading={busy}
+        disabled={confirming && !ready}
       />
+      {confirming ? (
+        <Button
+          kind="secondary"
+          title="Cancel"
+          onPress={() => {
+            setConfirming(false);
+            setTyped('');
+          }}
+        />
+      ) : null}
     </Card>
   );
 }

@@ -2,11 +2,11 @@
 // can remove an auth user, so this runs server-side with that key, never the
 // publishable key the app ships with.
 //
-// Safety: a Manager cannot delete their account while other people are still
-// active members of their business, so a team is never left without a
-// Manager. Every other record created by this person (horses, costs,
-// invoices...) is kept for the business, with its "created by" cleared
-// rather than the record deleted.
+// Safety: a Manager with other people still on the team is never silently
+// removed. The app must send { deleteBusiness: true } (after the Manager types
+// DELETE), which deletes the whole business, its stored photos and logo, and
+// every record with it. Everyone else keeps the business's records, with
+// "created by" cleared rather than the record deleted.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const CORS_HEADERS = {
@@ -20,6 +20,19 @@ function json(body: unknown, status = 200) {
     status,
     headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
   });
+}
+
+// Lists every file under a folder, going into sub-folders.
+// deno-lint-ignore no-explicit-any
+async function listAll(admin: any, bucket: string, folder: string): Promise<string[]> {
+  const out: string[] = [];
+  const { data } = await admin.storage.from(bucket).list(folder, { limit: 1000 });
+  for (const item of data ?? []) {
+    const path = `${folder}/${item.name}`;
+    if (item.id) out.push(path);
+    else out.push(...(await listAll(admin, bucket, path)));
+  }
+  return out;
 }
 
 Deno.serve(async (req) => {
@@ -41,6 +54,14 @@ Deno.serve(async (req) => {
 
   const admin = createClient(url, serviceKey);
 
+  let deleteBusiness = false;
+  try {
+    const body = await req.json();
+    deleteBusiness = body?.deleteBusiness === true;
+  } catch {
+    // No body: treat as a plain account delete.
+  }
+
   // Block deletion if this person is the Manager of a business that still has
   // other active people in it — they would lose access to everything at once.
   const { data: managerRows, error: memErr } = await admin
@@ -59,7 +80,7 @@ Deno.serve(async (req) => {
       .eq('active', true)
       .neq('user_id', userId);
     if (countErr) return json({ error: countErr.message }, 500);
-    if ((count ?? 0) > 0) {
+    if ((count ?? 0) > 0 && !deleteBusiness) {
       const name = (row as unknown as { businesses: { name: string } | null }).businesses?.name ?? 'your business';
       return json(
         {
@@ -67,6 +88,21 @@ Deno.serve(async (req) => {
         },
         409,
       );
+    }
+  }
+
+  // Deleting the business removes every record (cascade) and, first, its files.
+  if (deleteBusiness) {
+    for (const row of managerRows ?? []) {
+      for (const bucket of ['horse-photos', 'business-assets']) {
+        const paths = await listAll(admin, bucket, row.business_id);
+        for (let i = 0; i < paths.length; i += 100) {
+          const { error: rmErr } = await admin.storage.from(bucket).remove(paths.slice(i, i + 100));
+          if (rmErr) return json({ error: rmErr.message }, 500);
+        }
+      }
+      const { error: bizErr } = await admin.from('businesses').delete().eq('id', row.business_id);
+      if (bizErr) return json({ error: bizErr.message }, 500);
     }
   }
 

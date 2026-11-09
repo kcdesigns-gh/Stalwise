@@ -41,6 +41,8 @@ function RootNavigator() {
       {showSidebar ? <WebSidebarNav /> : null}
       <View style={{ flex: 1, minWidth: 0 }}>
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
+          <Stack.Screen name="privacy" />
+
           <Stack.Protected guard={recovering}>
             <Stack.Screen name="reset-password" />
           </Stack.Protected>

@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import { Platform } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
 
@@ -8,8 +9,11 @@ const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
 
 /** Opens the photo library for a square image (used for business logos). */
 export async function pickSquareImage(): Promise<PickedImage | null> {
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!permission.granted) return null;
+  // iPhone's system photo picker needs no permission, so we don't ask there.
+  if (Platform.OS !== 'ios') {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) return null;
+  }
 
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],

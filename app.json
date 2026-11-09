@@ -44,7 +44,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Stalwise uses your photos so you can add pictures to a horse's file and a logo for your business.",
+          "photosPermission": false,
           "cameraPermission": "Stalwise uses the camera so you can take photos for a horse's file.",
           "microphonePermission": false
         }

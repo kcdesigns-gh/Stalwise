@@ -1,5 +1,6 @@
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
+import { Platform } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
 import { uploadImage } from '@/lib/upload';
@@ -71,8 +72,11 @@ export async function pickHorsePhotos(source: 'camera' | 'gallery'): Promise<Pic
     const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 });
     return result.canceled ? [] : result.assets.map((a) => ({ uri: a.uri, width: a.width }));
   }
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!permission.granted) throw new Error('Allow photo access for Stalwise in your phone settings to add photos.');
+  // iPhone's system photo picker needs no permission, so we don't ask there.
+  if (Platform.OS !== 'ios') {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) throw new Error('Allow photo access for Stalwise in your phone settings to add photos.');
+  }
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
     allowsMultipleSelection: true,
