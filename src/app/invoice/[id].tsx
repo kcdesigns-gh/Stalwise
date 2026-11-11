@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, Badge, BlueHeader, Button, Card, ChoiceList, DetailRow, ErrorText, Loading, LogoMark, Segmented, TextField, ToggleRow } from '@/components/ui';
 import { Colors, ContentMaxWidth, Spacing } from '@/constants/theme';
-import { formatDate, formatMoney, parseDayMonthYear, parseMoney, parseQuantity, toDayMonthYear, todayIso } from '@/lib/format';
+import { formatDate, formatMoney, parseDayMonthYear, parseMoney, parseQuantity, toDayMonthYear, todayIso, dateOrderWords } from '@/lib/format';
 import { INVOICE_STATUS_LABELS, LINE_KIND_LABELS } from '@/lib/labels';
 import { supabase, type Tables, type Views } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
@@ -315,7 +315,7 @@ function PaymentCard({
   const add = async () => {
     setError(null);
     const day = parseDayMonthYear(date);
-    if (!day) return setError('Enter the date as day/month/year.');
+    if (!day) return setError(`Enter the date as ${dateOrderWords()}.`);
     const money = parseMoney(amount);
     if (money === null || money <= 0) return setError('Enter the amount paid, for example 2500.');
     setBusy(true);

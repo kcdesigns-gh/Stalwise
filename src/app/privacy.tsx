@@ -43,6 +43,10 @@ const SECTIONS: { title: string; body: string }[] = [
     body: `You can ask to see, correct or delete your personal information by emailing ${SUPPORT_EMAIL}, or delete your account in the app. If you are unhappy with how we handle your information you can complain to the Information Regulator of South Africa.`,
   },
   {
+    title: 'If you are in the United States',
+    body: `We do not sell your personal information or share it for advertising. Depending on your state (for example California) you may have the right to know what we hold about you, to correct or delete it, and not to be treated differently for asking. Email ${SUPPORT_EMAIL} and we will respond within 45 days.`,
+  },
+  {
     title: 'Children',
     body: 'Stalwise is a business tool and is not meant for children.',
   },

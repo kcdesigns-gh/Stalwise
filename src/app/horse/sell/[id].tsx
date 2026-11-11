@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, BlueHeader, Button, Card, ErrorText, Loading, TextField, ToggleRow } from '@/components/ui';
 import { Colors, ContentMaxWidth, Fonts, Radius, Spacing } from '@/constants/theme';
-import { parseDayMonthYear, parseMoney, toDayMonthYear, todayIso } from '@/lib/format';
+import { parseDayMonthYear, parseMoney, toDayMonthYear, todayIso, dateOrderWords } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
@@ -82,7 +82,7 @@ function SellForm({
   const save = async () => {
     setError(null);
     const date = parseDayMonthYear(soldOn);
-    if (!date) return setError('Enter the sale date as day/month/year.');
+    if (!date) return setError(`Enter the sale date as ${dateOrderWords()}.`);
     const amount = parseMoney(price);
     if (amount === null || amount < 0) return setError('Enter the sale price, for example 65000.');
     let commissionPercent: number | null = null;

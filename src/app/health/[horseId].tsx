@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, BlueHeader, Button, Card, DetailRow, EmptyState, ErrorText, Loading, Segmented, TextField } from '@/components/ui';
 import { Colors, ContentMaxWidth, Spacing } from '@/constants/theme';
-import { formatDate, parseDayMonthYear, toDayMonthYear, todayIso } from '@/lib/format';
+import { formatDate, parseDayMonthYear, toDayMonthYear, todayIso, dateOrderWords } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
@@ -119,7 +119,7 @@ function AddScheduleCard({ bid, horseId, onAdded }: { bid: string; horseId: stri
     const days = Number(intervalDays);
     if (!Number.isInteger(days) || days <= 0) return setError('Enter how many days between each one, for example 90.');
     const due = parseDayMonthYear(nextDue);
-    if (!due) return setError('Enter the next due date as day/month/year.');
+    if (!due) return setError(`Enter the next due date as ${dateOrderWords()}.`);
     setBusy(true);
     const { error: e } = await supabase.from('care_schedules').insert({
       business_id: bid,

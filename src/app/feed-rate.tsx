@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, BlueHeader, Button, Card, DetailRow, ErrorText, Loading, TextField } from '@/components/ui';
 import { Colors, ContentMaxWidth, Spacing } from '@/constants/theme';
-import { formatDate, formatMoney, parseDayMonthYear, parseMoney, toDayMonthYear, todayIso } from '@/lib/format';
+import { formatDate, formatMoney, parseDayMonthYear, parseMoney, toDayMonthYear, todayIso, dateOrderWords, dateExample } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
@@ -57,7 +57,7 @@ export default function FeedRateScreen() {
     setSaved(false);
     if (typed === null) return setSaveError('Enter the daily rate as a number, for example 50.');
     const day = parseDayMonthYear(from);
-    if (!day) return setSaveError('Enter the start date as day/month/year, for example 01/11/2026.');
+    if (!day) return setSaveError(`Enter the start date as ${dateOrderWords()}, for example ${dateExample()}.`);
     setBusy(true);
     const { error: e } = await supabase.rpc('set_daily_feed_rate', { bid, rate: typed, from_date: day });
     if (e) {

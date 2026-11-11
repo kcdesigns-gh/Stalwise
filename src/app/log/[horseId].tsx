@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, BlueHeader, Button, Card, ChoiceList, ErrorText, Loading, Segmented, TextField, ToggleRow } from '@/components/ui';
 import { Colors, ContentMaxWidth, Spacing } from '@/constants/theme';
-import { formatMoney, parseDayMonthYear, parseMoney, parseQuantity, toDayMonthYear, todayIso } from '@/lib/format';
+import { formatMoney, parseDayMonthYear, parseMoney, parseQuantity, toDayMonthYear, todayIso, dateOrderWords, dateExample } from '@/lib/format';
 import { loadCategories, loadProducts, priceSummary, type Product } from '@/lib/products';
 import { supabase } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
@@ -119,7 +119,7 @@ function LogForm({
   const save = async () => {
     setError(null);
     const day = parseDayMonthYear(date);
-    if (!day) return setError('Enter the date as day/month/year, for example 01/11/2026.');
+    if (!day) return setError(`Enter the date as ${dateOrderWords()}, for example ${dateExample()}.`);
 
     if (mode === 'feed') {
       if (!product) return setError('Choose which feed was given.');

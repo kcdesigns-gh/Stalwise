@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, BlueHeader, Button, Card, ChoiceList, ErrorText, Loading, TextField } from '@/components/ui';
 import { Colors, ContentMaxWidth, Spacing } from '@/constants/theme';
-import { formatDate, parseDayMonthYear, toDayMonthYear } from '@/lib/format';
+import { formatDate, parseDayMonthYear, toDayMonthYear, dateOrderWords, dateExample, dateHint } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
@@ -129,7 +129,7 @@ function AssignForm({
   const place = async () => {
     if (!target) return setError('Choose a stall first.');
     const day = chosen?.kind === 'camp' ? null : readDate(leaveNew);
-    if (day === undefined) return setError('Enter the leaving date as day/month/year, for example 15/11/2026.');
+    if (day === undefined) return setError(`Enter the leaving date as ${dateOrderWords()}, for example ${dateExample()}.`);
     await run(
       () => supabase.rpc('assign_horse_to_stall', { horse: horseId, stall: target, expected_end: day ?? undefined }),
       () => router.back(),
@@ -139,7 +139,7 @@ function AssignForm({
   const saveLeaving = async () => {
     if (!current) return;
     const day = readDate(leaveNow);
-    if (day === undefined) return setError('Enter the leaving date as day/month/year, for example 15/11/2026.');
+    if (day === undefined) return setError(`Enter the leaving date as ${dateOrderWords()}, for example ${dateExample()}.`);
     await run(
       () => supabase.rpc('assign_horse_to_stall', { horse: horseId, stall: current.stallId, expected_end: day ?? undefined }),
       async () => {
@@ -174,7 +174,7 @@ function AssignForm({
               value={leaveNow}
               onChangeText={setLeaveNow}
               keyboardType="numbers-and-punctuation"
-              placeholder="dd/mm/yyyy"
+              placeholder={dateHint()}
               hint="Leave empty if there is no leaving date."
             />
             <Button kind="secondary" title="Save leaving date" onPress={saveLeaving} loading={busy} />
@@ -202,7 +202,7 @@ function AssignForm({
                   value={leaveNew}
                   onChangeText={setLeaveNew}
                   keyboardType="numbers-and-punctuation"
-                  placeholder="dd/mm/yyyy"
+                  placeholder={dateHint()}
                 />
               ) : null}
               <Button

@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, BlueHeader, Button, Card, DetailRow, ErrorText, Loading, Segmented, TextField } from '@/components/ui';
 import { ContentMaxWidth, Spacing } from '@/constants/theme';
-import { formatDate, parseDayMonthYear, toDayMonthYear, todayIso } from '@/lib/format';
+import { formatDate, parseDayMonthYear, toDayMonthYear, todayIso, dateOrderWords, dateHint } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
@@ -110,7 +110,7 @@ function AddBreedingCard({ bid, horseId, onAdded }: { bid: string; horseId: stri
     setError(null);
     if (!stallionName.trim()) return setError('Enter the stallion.');
     const day = parseDayMonthYear(bredOn);
-    if (!day) return setError('Enter the date as day/month/year.');
+    if (!day) return setError(`Enter the date as ${dateOrderWords()}.`);
     setBusy(true);
     const { error: e } = await supabase.from('breeding_events').insert({
       business_id: bid,
@@ -168,9 +168,9 @@ function AddCheckAndFoalCard({
   const addCheck = async () => {
     setError(null);
     const day = parseDayMonthYear(checkedOn);
-    if (!day) return setError('Enter the check date as day/month/year.');
+    if (!day) return setError(`Enter the check date as ${dateOrderWords()}.`);
     const expected = expectedFoaling.trim() ? parseDayMonthYear(expectedFoaling) : null;
-    if (expectedFoaling.trim() && !expected) return setError('Enter the expected foaling date as day/month/year.');
+    if (expectedFoaling.trim() && !expected) return setError(`Enter the expected foaling date as ${dateOrderWords()}.`);
     setBusy(true);
     const { error: e } = await supabase.from('pregnancy_checks').insert({
       business_id: bid,
@@ -187,7 +187,7 @@ function AddCheckAndFoalCard({
   const addFoaling = async () => {
     setError(null);
     const day = parseDayMonthYear(foaledOn);
-    if (!day) return setError('Enter the foaling date as day/month/year.');
+    if (!day) return setError(`Enter the foaling date as ${dateOrderWords()}.`);
     setBusy(true);
     const { error: e } = await supabase.from('foalings').insert({
       business_id: bid,
@@ -216,7 +216,7 @@ function AddCheckAndFoalCard({
         <>
           <TextField label="Checked on" value={checkedOn} onChangeText={setCheckedOn} keyboardType="numbers-and-punctuation" />
           <Segmented label="Result" options={(Object.keys(RESULT_LABELS) as PregnancyResult[]).map((r) => ({ value: r, label: RESULT_LABELS[r] }))} value={result} onChange={setResult} />
-          <TextField label="Expected foaling (optional)" value={expectedFoaling} onChangeText={setExpectedFoaling} placeholder="dd/mm/yyyy" />
+          <TextField label="Expected foaling (optional)" value={expectedFoaling} onChangeText={setExpectedFoaling} placeholder={dateHint()} />
           <ErrorText message={error} />
           <Button kind="secondary" icon="add" title="Add check" onPress={addCheck} loading={busy} />
         </>

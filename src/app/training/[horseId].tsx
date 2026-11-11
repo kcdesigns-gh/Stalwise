@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, BlueHeader, Button, Card, DetailRow, ErrorText, Loading, Segmented, TextField } from '@/components/ui';
 import { ContentMaxWidth, Colors, Spacing } from '@/constants/theme';
-import { formatDate, parseDayMonthYear, toDayMonthYear, todayIso } from '@/lib/format';
+import { formatDate, parseDayMonthYear, toDayMonthYear, todayIso, dateOrderWords } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
@@ -136,7 +136,7 @@ function AddSessionCard({ bid, horseId, onAdded }: { bid: string; horseId: strin
     setError(null);
     if (!sessionType.trim()) return setError('What kind of session, for example Flatwork or Jumping.');
     const day = parseDayMonthYear(date);
-    if (!day) return setError('Enter the date as day/month/year.');
+    if (!day) return setError(`Enter the date as ${dateOrderWords()}.`);
     setBusy(true);
     const { error: e } = await supabase.from('training_sessions').insert({
       business_id: bid,
@@ -183,7 +183,7 @@ function AddNoteCard({ bid, horseId, onAdded }: { bid: string; horseId: string; 
   const add = async () => {
     setError(null);
     const week = parseDayMonthYear(weekStarting);
-    if (!week) return setError('Enter the week starting date as day/month/year.');
+    if (!week) return setError(`Enter the week starting date as ${dateOrderWords()}.`);
     if (!note.trim()) return setError('Write the progress note.');
     setBusy(true);
     const { error: e } = await supabase.from('progress_notes').insert({
@@ -226,7 +226,7 @@ function AddShowCard({ bid, horseId, onAdded }: { bid: string; horseId: string; 
     setError(null);
     if (!showName.trim()) return setError('Enter the show name.');
     const day = parseDayMonthYear(date);
-    if (!day) return setError('Enter the date as day/month/year.');
+    if (!day) return setError(`Enter the date as ${dateOrderWords()}.`);
     setBusy(true);
     const { error: e } = await supabase.from('show_entries').insert({
       business_id: bid,

@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, BlueHeader, Button, Card, ChoiceList, ErrorText, Loading, TextField } from '@/components/ui';
 import { Colors, ContentMaxWidth, Spacing } from '@/constants/theme';
-import { formatDate, parseDayMonthYear } from '@/lib/format';
+import { formatDate, parseDayMonthYear, dateOrderWords, dateExample, dateHint } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
@@ -68,7 +68,7 @@ export default function StallScreen() {
     let day: string | null = null;
     if (leaving.trim()) {
       day = parseDayMonthYear(leaving);
-      if (!day) return setActionError('Enter the leaving date as day/month/year, for example 15/11/2026.');
+      if (!day) return setActionError(`Enter the leaving date as ${dateOrderWords()}, for example ${dateExample()}.`);
     }
     setBusy(true);
     const { error: e } = await supabase.rpc('assign_horse_to_stall', { horse: pick, stall: stall.id, expected_end: day ?? undefined });
@@ -153,7 +153,7 @@ export default function StallScreen() {
                       value={leaving}
                       onChangeText={setLeaving}
                       keyboardType="numbers-and-punctuation"
-                      placeholder="dd/mm/yyyy"
+                      placeholder={dateHint()}
                       hint="Shows on the stall board so you know when it frees up."
                     />
                   ) : null}

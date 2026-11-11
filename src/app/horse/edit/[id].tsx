@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BlueHeader, Button, Card, ErrorText, Loading, Segmented, TextField, ToggleRow } from '@/components/ui';
 import { ContentMaxWidth, Spacing } from '@/constants/theme';
-import { parseDayMonthYear, toDayMonthYear } from '@/lib/format';
+import { parseDayMonthYear, toDayMonthYear, dateOrderWords, dateExample, dateHint } from '@/lib/format';
 import { SEX_LABELS } from '@/lib/labels';
 import { supabase, type HorseSex, type Tables } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
@@ -64,9 +64,9 @@ function EditForm({ horse, insetsBottom }: { horse: Tables<'horses'>; insetsBott
     setError(null);
     if (!name.trim()) return setError('Enter the horse’s name.');
     const entry = parseDayMonthYear(entryDate);
-    if (!entry) return setError('Enter the entry date as day/month/year, for example 01/11/2026.');
+    if (!entry) return setError(`Enter the entry date as ${dateOrderWords()}, for example ${dateExample()}.`);
     const born = birthDate.trim() ? parseDayMonthYear(birthDate) : null;
-    if (birthDate.trim() && !born) return setError('Enter the birth date as day/month/year.');
+    if (birthDate.trim() && !born) return setError(`Enter the birth date as ${dateOrderWords()}.`);
 
     setBusy(true);
     const { error: e } = await supabase
@@ -130,7 +130,7 @@ function EditForm({ horse, insetsBottom }: { horse: Tables<'horses'>; insetsBott
             label="Date of birth"
             value={birthDate}
             onChangeText={setBirthDate}
-            placeholder="dd/mm/yyyy"
+            placeholder={dateHint()}
             keyboardType="numbers-and-punctuation"
           />
           <TextField label="Passport / ID number" value={passport} onChangeText={setPassport} autoCapitalize="characters" />

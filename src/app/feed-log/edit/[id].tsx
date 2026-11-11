@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BlueHeader, Button, Card, ErrorText, Loading, TextField } from '@/components/ui';
 import { ContentMaxWidth, Spacing } from '@/constants/theme';
-import { parseDayMonthYear, parseQuantity, toDayMonthYear } from '@/lib/format';
+import { parseDayMonthYear, parseQuantity, toDayMonthYear, dateOrderWords } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
@@ -67,7 +67,7 @@ function EditForm({
   const save = async () => {
     setError(null);
     const day = parseDayMonthYear(date);
-    if (!day) return setError('Enter the date as day/month/year.');
+    if (!day) return setError(`Enter the date as ${dateOrderWords()}.`);
     const qty = parseQuantity(quantity);
     if (qty === null || qty <= 0) return setError('Enter how much was given, for example 2.');
 

@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
+import { localeForCountry } from '@/lib/countries';
+import { setFormatLocale } from '@/lib/format';
 import { supabase, type MemberRole, type Tables } from '@/lib/supabase';
 import { useAuth } from '@/providers/auth';
 
@@ -94,6 +96,10 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   // Only trust data loaded for the person signed in right now.
   const current = userId && loaded?.forUser === userId ? loaded : null;
   const role = current?.role ?? null;
+
+  // Money and dates follow the business's country (US: $1,250.00 and mm/dd/yyyy).
+  const business = current?.business ?? null;
+  setFormatLocale(localeForCountry(business?.country_code) ?? business?.locale);
 
   return (
     <BusinessContext.Provider
