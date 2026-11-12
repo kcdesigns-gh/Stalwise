@@ -6,7 +6,7 @@ import {
   Manrope_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/manrope';
-import { Stack } from 'expo-router';
+import { Stack, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
@@ -62,24 +62,29 @@ function RootNavigator() {
 
   const showSidebar = Platform.OS === 'web' && hasBusiness && !recovering;
 
+  // Where to send someone who opens a screen they may not see right now (or
+  // just "/"). Without this the router picks the first open screen by name,
+  // which is the privacy policy.
+  const home: Href = recovering ? '/reset-password' : !signedIn ? '/sign-in' : !hasBusiness ? '/setup' : '/';
+
   return (
     <View style={{ flex: 1, flexDirection: showSidebar ? 'row' : 'column' }}>
       {showSidebar ? <WebSidebarNav /> : null}
       <View style={{ flex: 1, minWidth: 0 }}>
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
-          <Stack.Protected guard={recovering}>
+          <Stack.Protected guard={recovering} redirectTo={home}>
             <Stack.Screen name="reset-password" />
           </Stack.Protected>
 
-          <Stack.Protected guard={!signedIn && !recovering}>
+          <Stack.Protected guard={!signedIn && !recovering} redirectTo={home}>
             <Stack.Screen name="sign-in" />
           </Stack.Protected>
 
-          <Stack.Protected guard={signedIn && !hasBusiness && !recovering}>
+          <Stack.Protected guard={signedIn && !hasBusiness && !recovering} redirectTo={home}>
             <Stack.Screen name="setup" />
           </Stack.Protected>
 
-          <Stack.Protected guard={hasBusiness && !recovering}>
+          <Stack.Protected guard={hasBusiness && !recovering} redirectTo={home}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="horse/[id]" />
             <Stack.Screen name="horse/edit/[id]" />
@@ -110,9 +115,7 @@ function RootNavigator() {
             <Stack.Screen name="log/[horseId]" options={{ presentation: 'modal' }} />
           </Stack.Protected>
 
-          {/* Open to everyone. Kept last on purpose: the first screen that is
-              allowed is where "/" lands, and that must be sign-in, setup or the
-              dashboard, never the privacy policy. */}
+          {/* Open to everyone, signed in or not. */}
           <Stack.Screen name="privacy" />
         </Stack>
       </View>
