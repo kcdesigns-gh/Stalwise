@@ -43,6 +43,36 @@ export default function ManageStallsScreen() {
   }
   if (loading && !data) return <Loading />;
 
+  // A stall can be deleted only when it is empty and has never held a horse.
+  // One with a history is kept (switched off instead) so past records stay intact.
+  const remove = async (stall: StallRow) => {
+    setActionError(null);
+    setBusyId(stall.id);
+    const { count, error: countError } = await supabase
+      .from('stall_assignments')
+      .select('id', { count: 'exact', head: true })
+      .eq('stall_id', stall.id)
+      .is('ended_on', null);
+    if (countError) {
+      setActionError(countError.message);
+    } else if ((count ?? 0) > 0) {
+      setActionError(`${stall.name} still has a horse in it. Move the horse out first, then delete it.`);
+    } else {
+      const { data: gone, error: e } = await supabase.from('stalls').delete().eq('id', stall.id).select('id');
+      if (e?.code === '23503') {
+        setActionError(
+          `${stall.name} has held horses before, so its history is kept and it can't be deleted. Switch off "In use" to take it off the stall board.`,
+        );
+      } else if (e) {
+        setActionError(e.message);
+      } else if (!gone?.length) {
+        setActionError(`${stall.name} could not be deleted. Please try again.`);
+      }
+    }
+    await reload();
+    setBusyId(null);
+  };
+
   const save = async (id: string, patch: Partial<Pick<StallRow, 'name' | 'capacity' | 'active'>>) => {
     setActionError(null);
     setBusyId(id);
@@ -54,14 +84,20 @@ export default function ManageStallsScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <BlueHeader title="Manage stalls" showBack />
+      <BlueHeader title="Add and delete stalls" showBack />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]} keyboardShouldPersistTaps="handled">
         <ErrorText message={error ?? actionError} />
 
         <AddStallCard bid={bid} onAdded={reload} nextSortOrder={(data?.length ?? 0) + 1} />
 
         {(data ?? []).map((s) => (
-          <StallRowCard key={s.id} stall={s} busy={busyId === s.id} onSave={(patch) => save(s.id, patch)} />
+          <StallRowCard
+            key={s.id}
+            stall={s}
+            busy={busyId === s.id}
+            onSave={(patch) => save(s.id, patch)}
+            onDelete={() => remove(s)}
+          />
         ))}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -72,11 +108,14 @@ function StallRowCard({
   stall,
   busy,
   onSave,
+  onDelete,
 }: {
   stall: StallRow;
   busy: boolean;
   onSave: (patch: Partial<Pick<StallRow, 'name' | 'capacity' | 'active'>>) => void;
+  onDelete: () => void;
 }) {
+  const [confirming, setConfirming] = useState(false);
   const [name, setName] = useState(stall.name);
   const [capacity, setCapacity] = useState(String(stall.capacity));
 
@@ -107,6 +146,17 @@ function StallRowCard({
           loading={busy}
         />
       ) : null}
+      <Button
+        kind="secondary"
+        title={confirming ? `Tap again to delete ${stall.name}` : stall.kind === 'camp' ? 'Delete camp' : 'Delete stall'}
+        onPress={() => {
+          if (!confirming) return setConfirming(true);
+          setConfirming(false);
+          onDelete();
+        }}
+        loading={busy && !changed}
+      />
+      {confirming ? <Button kind="secondary" title="Cancel" onPress={() => setConfirming(false)} /> : null}
     </Card>
   );
 }
