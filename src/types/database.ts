@@ -2889,6 +2889,7 @@ export type Database = {
     }
     Functions: {
       accept_staff_invite: { Args: { invite_code: string }; Returns: string }
+      archive_horse: { Args: { horse: string }; Returns: undefined }
       assign_horse_to_stall: {
         Args: { expected_end?: string; horse: string; stall: string }
         Returns: undefined

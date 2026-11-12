@@ -181,8 +181,9 @@ export default function HorseScreen() {
     }
     setActionError(null);
     setSaving(true);
-    if (stallName) await supabase.rpc('remove_horse_from_stall', { horse: horse.id });
-    const { error: e } = await supabase.from('horses').update({ archived_at: new Date().toISOString() }).eq('id', horse.id);
+    // One step on the server: ends the horse's stay (so feed and shared costs
+    // stop counting), frees its stall and archives it.
+    const { error: e } = await supabase.rpc('archive_horse', { horse: horse.id });
     if (e) {
       setActionError(e.message);
       setSaving(false);
@@ -192,8 +193,8 @@ export default function HorseScreen() {
   };
 
   const saveValuation = async () => {
-    const amount = Number(valuation.replace(/\s/g, '').replace(',', '.'));
-    if (!Number.isFinite(amount) || amount < 0) return setActionError('Enter the valuation as a number, for example 85000.');
+    const amount = parseMoney(valuation);
+    if (amount === null) return setActionError('Enter the valuation as a number, for example 85000.');
     setActionError(null);
     setSaving(true);
     const { error: e } = await supabase
