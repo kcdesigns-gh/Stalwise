@@ -2925,6 +2925,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      join_with_invite: { Args: { invite_code: string }; Returns: Json }
       generate_recurring_invoices: {
         Args: { bid: string; for_month: string }
         Returns: number

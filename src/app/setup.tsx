@@ -23,9 +23,12 @@ export default function SetupScreen() {
     setJoinError(null);
     if (!code.trim()) return setJoinError('Enter the invite code your Manager gave you.');
     setJoining(true);
-    const { error } = await supabase.rpc('accept_staff_invite', { invite_code: code.trim() });
+    const { data, error } = await supabase.rpc('join_with_invite', { invite_code: code.trim() });
     setJoining(false);
     if (error) return setJoinError(error.message);
+    // A wrong, used or expired code comes back as a result, not an error.
+    const result = data as { ok: boolean; error?: string } | null;
+    if (!result?.ok) return setJoinError(result?.error ?? 'That code did not work. Check it and try again.');
     await refresh();
   };
 

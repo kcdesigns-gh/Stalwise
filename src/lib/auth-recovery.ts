@@ -20,32 +20,51 @@ function paramsFrom(url: string): Record<string, string> {
   return params;
 }
 
+/** Email links that sign a person in. Only "recovery" also asks for a new password. */
+const SIGN_IN_LINK_TYPES = ['recovery', 'signup', 'magiclink', 'invite', 'email_change'];
+
+/** Take the sign-in token out of the address bar and the browser history. */
+function clearLinkFromAddressBar() {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    window.history.replaceState(null, '', window.location.pathname);
+  }
+}
+
 /**
- * Looks for a password-recovery link in the current URL (web) or the link that
- * opened the app (native), and signs the person into a recovery session if found.
- * Returns true when a recovery session was started.
+ * Looks for an email link in the current URL (web) or the link that opened the
+ * app (native): a password reset, or the "confirm your email" link sent at
+ * sign-up. Signs the person in with it and removes the token from the address
+ * bar, where it would otherwise stay in the browser history.
+ * Returns true only when a password-recovery session was started.
  */
 export async function consumeRecoveryLink(): Promise<boolean> {
   const url = Platform.OS === 'web' ? (typeof window !== 'undefined' ? window.location.href : '') : ((await Linking.getInitialURL()) ?? '');
   if (!url) return false;
   const params = paramsFrom(url);
-  if (params.type !== 'recovery') return false;
+  const hasTokens = !!(params.access_token && params.refresh_token);
 
-  if (params.access_token && params.refresh_token) {
+  // A failed or expired link carries an error and no token: just tidy the address.
+  if (params.error_code || params.error_description) {
+    clearLinkFromAddressBar();
+    return false;
+  }
+
+  if (hasTokens && params.type && SIGN_IN_LINK_TYPES.includes(params.type)) {
     const { error } = await supabase.auth.setSession({
       access_token: params.access_token,
       refresh_token: params.refresh_token,
     });
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.history.replaceState(null, '', window.location.pathname);
-    }
-    return !error;
+    clearLinkFromAddressBar();
+    return !error && params.type === 'recovery';
   }
-  if (params.code) {
+  if (hasTokens) {
+    // A token of a kind we do not use: never leave it in the address bar.
+    clearLinkFromAddressBar();
+    return false;
+  }
+  if (params.code && params.type === 'recovery') {
     const { error } = await supabase.auth.exchangeCodeForSession(url);
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.history.replaceState(null, '', window.location.pathname);
-    }
+    clearLinkFromAddressBar();
     return !error;
   }
   return false;

@@ -22,15 +22,22 @@ function json(body: unknown, status = 200) {
   });
 }
 
-// Lists every file under a folder, going into sub-folders.
+// Lists every file under a folder, going into sub-folders. Storage returns at
+// most 1000 names at a time, so keep asking until a page comes back short.
 // deno-lint-ignore no-explicit-any
 async function listAll(admin: any, bucket: string, folder: string): Promise<string[]> {
+  const PAGE = 1000;
   const out: string[] = [];
-  const { data } = await admin.storage.from(bucket).list(folder, { limit: 1000 });
-  for (const item of data ?? []) {
-    const path = `${folder}/${item.name}`;
-    if (item.id) out.push(path);
-    else out.push(...(await listAll(admin, bucket, path)));
+  for (let offset = 0; ; offset += PAGE) {
+    const { data, error } = await admin.storage.from(bucket).list(folder, { limit: PAGE, offset });
+    if (error) throw new Error(error.message);
+    const items = data ?? [];
+    for (const item of items) {
+      const path = `${folder}/${item.name}`;
+      if (item.id) out.push(path);
+      else out.push(...(await listAll(admin, bucket, path)));
+    }
+    if (items.length < PAGE) break;
   }
   return out;
 }
@@ -80,6 +87,14 @@ Deno.serve(async (req) => {
       .eq('active', true)
       .neq('user_id', userId);
     if (countErr) return json({ error: countErr.message }, 500);
+    // A Manager who is the only person left must delete the business with the
+    // account. Otherwise it would be left behind with nobody able to open it.
+    if ((count ?? 0) === 0 && !deleteBusiness) {
+      return json(
+        { error: 'Deleting your account also deletes your business and all its records. Confirm this in the app, then try again.' },
+        409,
+      );
+    }
     if ((count ?? 0) > 0 && !deleteBusiness) {
       const name = (row as unknown as { businesses: { name: string } | null }).businesses?.name ?? 'your business';
       return json(
@@ -95,7 +110,12 @@ Deno.serve(async (req) => {
   if (deleteBusiness) {
     for (const row of managerRows ?? []) {
       for (const bucket of ['horse-photos', 'business-assets']) {
-        const paths = await listAll(admin, bucket, row.business_id);
+        let paths: string[];
+        try {
+          paths = await listAll(admin, bucket, row.business_id);
+        } catch (e) {
+          return json({ error: e instanceof Error ? e.message : 'The stored files could not be listed.' }, 500);
+        }
         for (let i = 0; i < paths.length; i += 100) {
           const { error: rmErr } = await admin.storage.from(bucket).remove(paths.slice(i, i + 100));
           if (rmErr) return json({ error: rmErr.message }, 500);
