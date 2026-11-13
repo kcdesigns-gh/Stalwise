@@ -90,7 +90,7 @@ export default function HorsesScreen() {
                 <AppText
                   variant="small"
                   style={{ fontFamily: selected ? Fonts.bold : Fonts.semibold }}
-                  color={selected ? Colors.deepBlue : Colors.surface}>
+                  color={selected ? Colors.onGold : Colors.onChrome}>
                   {f.label}
                 </AppText>
               </Pressable>
@@ -109,7 +109,7 @@ export default function HorsesScreen() {
           numColumns={numColumns}
           columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.royalBlue} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.link} />}
           ListHeaderComponent={<ErrorText message={error} />}
           ListEmptyComponent={
             horses && horses.length === 0 ? (
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.midBlue,
     paddingHorizontal: Spacing.md,
-    color: Colors.surface,
+    color: Colors.onChrome,
     fontFamily: Fonts.regular,
     fontSize: 15,
   },

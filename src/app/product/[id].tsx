@@ -192,7 +192,7 @@ function ProductForm({ productId, initial, categories }: { productId: string | n
             hint="How many times one bottle or bag is used. A bottle that treats 10 horses is 10. Use 1 if you use it whole."
           />
           <TextField label="One portion is called a" value={v.doseLabel} onChangeText={(t) => set('doseLabel', t)} placeholder="dose" hint="Dose, scoop, kg, flake…" />
-          <AppText variant="bodyStrong" color={Colors.deepBlue} accessibilityLiveRegion="polite">
+          <AppText variant="bodyStrong" color={Colors.heading} accessibilityLiveRegion="polite">
             {perDose != null ? `Works out to ${formatMoney(perDose, currency)} per ${v.doseLabel.trim() || 'dose'}` : 'Enter the price and doses to see the cost per dose'}
           </AppText>
         </Card>

@@ -50,7 +50,7 @@ export default function TasksScreen() {
       <BlueHeader title="Today's tasks" subtitle={data ? `${remaining} of ${data.length} left to do` : undefined} showBack />
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.royalBlue} />}>
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.link} />}>
         <ErrorText message={error ?? actionError} />
 
         {canCreate ? <AddTaskCard bid={bid} onAdded={reload} /> : null}
@@ -123,6 +123,6 @@ const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md },
   taskRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: 12 },
   divider: { borderBottomWidth: 1, borderBottomColor: Colors.divider },
-  checkbox: { width: 22, height: 22, borderRadius: Radius.sm, borderWidth: 2, borderColor: Colors.royalBlue },
+  checkbox: { width: 22, height: 22, borderRadius: Radius.sm, borderWidth: 2, borderColor: Colors.link },
   checkboxDone: { backgroundColor: Colors.gold, borderColor: Colors.gold },
 });

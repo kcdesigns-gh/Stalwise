@@ -121,7 +121,7 @@ export default function StallsScreen() {
       ) : (
         <ScrollView
           contentContainerStyle={styles.content}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.royalBlue} />}>
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.link} />}>
           <ErrorText message={error ?? actionError} />
 
           {data && data.stalls.length === 0 ? (
@@ -160,7 +160,7 @@ export default function StallsScreen() {
                     <AppText variant="label" color={Colors.gold}>
                       {c.name.toUpperCase()}
                     </AppText>
-                    <AppText variant="bodyStrong" color={Colors.surface}>
+                    <AppText variant="bodyStrong" color={Colors.onChrome}>
                       {c.horses.length} {c.horses.length === 1 ? 'mare' : 'mares'}
                     </AppText>
                   </Pressable>
@@ -184,7 +184,7 @@ export default function StallsScreen() {
               {data.waiting.map((w, i) => (
                 <View key={w.id} style={[styles.waitRow, i < data.waiting.length - 1 && styles.divider]}>
                   <View style={[styles.position, i === 0 && { backgroundColor: Colors.gold }]}>
-                    <AppText variant="bodyStrong" color={Colors.deepBlue}>
+                    <AppText variant="bodyStrong" color={i === 0 ? Colors.onGold : Colors.heading}>
                       {i + 1}
                     </AppText>
                   </View>
@@ -229,7 +229,7 @@ function WaitingButton({ label, confirmLabel, active, onPress }: { label: string
       onPress={onPress}
       hitSlop={6}
       style={[styles.waitButton, active && styles.waitButtonActive]}>
-      <AppText variant="small" color={active ? Colors.deepBlue : Colors.royalBlue} style={{ fontWeight: '700' }}>
+      <AppText variant="small" color={active ? Colors.onGold : Colors.link} style={{ fontWeight: '700' }}>
         {active ? confirmLabel : label}
       </AppText>
     </Pressable>
@@ -254,7 +254,7 @@ function StallCard({ stall, onPress }: { stall: StallView; onPress: () => void }
       accessibilityLabel={`${stall.name}, ${horse.name}`}
       onPress={onPress}
       style={[styles.stall, horse.expectedEnd ? styles.leaving : null]}>
-      <AppText variant="label" color={horse.expectedEnd ? Colors.darkGold : Colors.royalBlue}>
+      <AppText variant="label" color={horse.expectedEnd ? Colors.darkGold : Colors.link}>
         {stall.name.toUpperCase()}
         {horse.expectedEnd ? ` · LEAVING ${formatDate(horse.expectedEnd).toUpperCase()}` : ''}
       </AppText>
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   },
   empty: { backgroundColor: 'transparent', borderStyle: 'dashed', borderWidth: 1.5, borderColor: '#8A93AD' },
   leaving: { borderColor: Colors.mutedGold },
-  camp: { backgroundColor: Colors.deepBlue, borderColor: Colors.deepBlue },
+  camp: { backgroundColor: Colors.deepBlue, borderColor: Colors.chromeBorder },
   waitRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md, paddingVertical: 10 },
   divider: { borderBottomWidth: 1, borderBottomColor: Colors.divider },
   position: {
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.royalBlue,
+    borderColor: Colors.link,
     justifyContent: 'center',
   },
   waitButtonActive: { backgroundColor: Colors.gold, borderColor: Colors.gold },

@@ -76,7 +76,7 @@ export default function FeedRateScreen() {
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.royalBlue} />}>
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.link} />}>
         <ErrorText message={error} />
 
         <Card gold>
@@ -120,7 +120,7 @@ export default function FeedRateScreen() {
             }
           />
           {monthly != null ? (
-            <AppText variant="bodyStrong" color={Colors.deepBlue} accessibilityLiveRegion="polite">
+            <AppText variant="bodyStrong" color={Colors.heading} accessibilityLiveRegion="polite">
               About {formatMoney(monthly, currency)} a month for {data!.horseCount} horse{data!.horseCount === 1 ? '' : 's'}
             </AppText>
           ) : null}

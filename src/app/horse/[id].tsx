@@ -225,7 +225,7 @@ export default function HorseScreen() {
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.royalBlue} />}>
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.link} />}>
         <ErrorText message={error ?? actionError} />
 
         {mainPhoto?.url ? (
@@ -236,7 +236,7 @@ export default function HorseScreen() {
               <Badge label={PURPOSE_LABELS[horse.current_purpose]} />
               {stallName ? <Badge label={stallName} tone="outline" /> : null}
             </View>
-            <AppText variant="bodyStrong" color={Colors.surface} style={styles.heroCaption}>
+            <AppText variant="bodyStrong" color={Colors.onChrome} style={styles.heroCaption}>
               On the yard since {formatDate(horse.entry_date)}
             </AppText>
           </View>
@@ -260,7 +260,7 @@ export default function HorseScreen() {
                   {p.url ? <Image source={{ uri: p.url }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
                   {p.is_main ? (
                     <View style={styles.mainTag}>
-                      <AppText variant="small" color={Colors.deepBlue} style={{ fontSize: 11 }}>
+                      <AppText variant="small" color={Colors.onGold} style={{ fontSize: 11 }}>
                         Main
                       </AppText>
                     </View>
@@ -298,7 +298,7 @@ export default function HorseScreen() {
                   value: formatMoney(profit.profit, currency),
                   tone: Number(profit.profit) >= 0 ? 'pos' : 'neg',
                   note: `${formatMoney(profit.total_income, currency)} earned to date minus ${formatMoney(profit.total_cost, currency)} spent since entry`,
-                  bar: Colors.deepBlue,
+                  bar: Colors.heading,
                 },
                 {
                   label: 'Projected',
@@ -470,7 +470,7 @@ export default function HorseScreen() {
                 accessibilityRole="button"
                 onPress={() => router.push({ pathname: '/horse/edit/[id]', params: { id: horse.id } })}
                 hitSlop={8}>
-                <AppText variant="small" color={Colors.royalBlue}>
+                <AppText variant="small" color={Colors.link}>
                   Edit
                 </AppText>
               </Pressable>

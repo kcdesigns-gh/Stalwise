@@ -287,5 +287,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.surface,
   },
-  ownerChipSelected: { backgroundColor: Colors.deepBlue, borderColor: Colors.deepBlue },
+  ownerChipSelected: { backgroundColor: Colors.selected, borderColor: Colors.selectedBorder },
 });

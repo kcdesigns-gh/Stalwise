@@ -3,7 +3,8 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { AppText, BlueHeader, Button, Card, DetailRow, ErrorText, LogoMark, TextField, ToggleRow } from '@/components/ui';
+import { AppText, BlueHeader, Button, Card, DetailRow, ErrorText, LogoMark, Segmented, TextField, ToggleRow } from '@/components/ui';
+import { setThemePreference, themeNeedsRestart, useThemePreference, type ThemePreference } from '@/lib/theme-mode';
 import { Colors, ContentMaxWidth, Fonts, Spacing, TabBarClearance } from '@/constants/theme';
 import { SUPPORT_EMAIL } from '@/constants/legal';
 import { ROLE_LABELS } from '@/lib/labels';
@@ -121,6 +122,8 @@ export default function MoreScreen() {
           />
         </Card>
 
+        <AppearanceCard />
+
         <DeleteAccountCard />
 
         <Text style={styles.footer}>
@@ -128,6 +131,33 @@ export default function MoreScreen() {
         </Text>
       </ScrollView>
     </View>
+  );
+}
+
+// Light or dark look. Saved on this device only, so each person chooses their own.
+function AppearanceCard() {
+  const preference = useThemePreference();
+  return (
+    <Card>
+      <AppText variant="heading" accessibilityRole="header">
+        Appearance
+      </AppText>
+      <Segmented<ThemePreference>
+        label="Look"
+        options={[
+          { value: 'light', label: 'Light' },
+          { value: 'dark', label: 'Dark' },
+          { value: 'system', label: 'Match device' },
+        ]}
+        value={preference}
+        onChange={setThemePreference}
+      />
+      <AppText variant="small">
+        {themeNeedsRestart
+          ? 'Close and reopen the app to see the change. Saved on this device only.'
+          : 'Dark is easier on the eyes indoors and at night. Switch to Light if the screen is hard to read in bright sun. Saved on this device only.'}
+      </AppText>
+    </Card>
   );
 }
 

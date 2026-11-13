@@ -233,7 +233,7 @@ function LogForm({
                   <AppText variant="small">This feed is covered by the flat daily rate, so no separate cost is added.</AppText>
                 ) : null}
                 {isManager && !(mode === 'feed' && product.includedInFeedRate) ? (
-                  <AppText variant="bodyStrong" color={Colors.deepBlue} accessibilityLiveRegion="polite">
+                  <AppText variant="bodyStrong" color={Colors.heading} accessibilityLiveRegion="polite">
                     {product.dosePrice == null
                       ? 'No price set for this product yet.'
                       : estimate != null

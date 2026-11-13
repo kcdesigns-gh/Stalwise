@@ -101,5 +101,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.surface,
   },
-  chipSelected: { backgroundColor: Colors.deepBlue, borderColor: Colors.deepBlue },
+  chipSelected: { backgroundColor: Colors.selected, borderColor: Colors.selectedBorder },
 });

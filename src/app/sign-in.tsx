@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     gap: Spacing.xxl,
   },
   brand: { alignItems: 'center', gap: Spacing.sm },
-  wordmark: { fontFamily: Fonts.extrabold, fontSize: 36, color: Colors.surface, letterSpacing: 0.3 },
+  wordmark: { fontFamily: Fonts.extrabold, fontSize: 36, color: Colors.onChrome, letterSpacing: 0.3 },
   tagline: { fontFamily: Fonts.medium, fontSize: 14, color: Colors.softBlue },
   card: { gap: Spacing.md, width: '100%', maxWidth: 480, alignSelf: 'center' },
 });

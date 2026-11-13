@@ -103,8 +103,8 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.gold,
     gap: 6,
   },
-  wordmark: { fontFamily: Fonts.extrabold, fontSize: 22, color: Colors.surface, marginBottom: 8 },
-  title: { fontFamily: Fonts.extrabold, fontSize: 20, color: Colors.surface },
+  wordmark: { fontFamily: Fonts.extrabold, fontSize: 22, color: Colors.onChrome, marginBottom: 8 },
+  title: { fontFamily: Fonts.extrabold, fontSize: 20, color: Colors.onChrome },
   subtitle: { fontFamily: Fonts.medium, fontSize: 13, color: Colors.softBlue },
   body: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md },
 });

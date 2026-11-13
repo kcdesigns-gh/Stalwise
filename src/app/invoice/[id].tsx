@@ -294,7 +294,7 @@ function InvoiceView({
                   <AppText numberOfLines={1}>{c.description ?? c.cost_categories?.name ?? 'Cost'} — {c.horses?.name}</AppText>
                   <AppText variant="small">{formatDate(c.cost_on)}</AppText>
                 </View>
-                <AppText variant="bodyStrong" color={Colors.royalBlue}>{formatMoney(c.amount, currency)}</AppText>
+                <AppText variant="bodyStrong" color={Colors.link}>{formatMoney(c.amount, currency)}</AppText>
               </Pressable>
             ))}
           </Card>

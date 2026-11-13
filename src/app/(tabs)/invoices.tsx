@@ -50,7 +50,7 @@ export default function InvoicesScreen() {
           data={data ?? []}
           keyExtractor={(i) => i.id}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.royalBlue} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.link} />}
           ListHeaderComponent={<ErrorText message={error} />}
           ListEmptyComponent={
             <EmptyState
