@@ -1,12 +1,13 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, Badge, BlueHeader, Button, Card, ChoiceList, DetailRow, ErrorText, Loading, LogoMark, Segmented, TextField, ToggleRow } from '@/components/ui';
 import { Colors, ContentMaxWidth, Spacing } from '@/constants/theme';
 import { formatDate, formatMoney, parseDayMonthYear, parseMoney, parseQuantity, toDayMonthYear, todayIso, dateOrderWords } from '@/lib/format';
 import { INVOICE_STATUS_LABELS, LINE_KIND_LABELS } from '@/lib/labels';
+import { COPIED_NOTICE, SHARE_FAILED, shareText } from '@/lib/share';
 import { supabase, type Tables, type Views } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
 import { useBusiness } from '@/providers/business';
@@ -21,16 +22,18 @@ export default function InvoiceScreen() {
 
   const { data, error, loading, reload } = useScreenData(async () => {
     const [invoice, lines, totals, payments, credits] = await Promise.all([
-      supabase.from('invoices').select('*, owners(id, name)').eq('id', id).single(),
+      supabase.from('invoices').select('*, owners(id, name, address, tax_number)').eq('id', id).single(),
       supabase.from('invoice_lines').select('*').eq('invoice_id', id).order('sort_order').order('created_at'),
       supabase.from('invoice_totals').select('*').eq('invoice_id', id).single(),
       supabase.from('payments').select('id, paid_on, amount, method, reference').eq('invoice_id', id).order('paid_on', { ascending: false }),
       supabase.from('credit_notes').select('id, credit_number, issued_on, amount, reason').eq('invoice_id', id).order('issued_on', { ascending: false }),
     ]);
     const inv = must(invoice);
-    const ownerHorseIds = must(
-      await supabase.from('horses').select('id').eq('business_id', bid).eq('current_owner_id', inv.owner_id),
-    ).map((h) => h.id);
+    // Every horse of this owner, including ones that have since left: they can still be billed.
+    const ownerHorses = must(
+      await supabase.from('horses').select('id, name').eq('business_id', bid).eq('current_owner_id', inv.owner_id).order('name'),
+    );
+    const ownerHorseIds = ownerHorses.map((h) => h.id);
     const unbilled = ownerHorseIds.length
       ? must(
           await supabase
@@ -51,6 +54,7 @@ export default function InvoiceScreen() {
       payments: must(payments) ?? [],
       credits: must(credits) ?? [],
       unbilled: unbilled.filter((c) => !linkedIds.has(c.id)),
+      ownerHorses,
     };
   }, [id, bid]);
 
@@ -87,24 +91,30 @@ function InvoiceView({
   reload,
 }: {
   data: {
-    invoice: Tables<'invoices'> & { owners: { id: string; name: string } | null };
+    invoice: Tables<'invoices'> & { owners: { id: string; name: string; address: string | null; tax_number: string | null } | null };
     lines: Line[];
     totals: Views<'invoice_totals'> | null;
     payments: { id: string; paid_on: string; amount: number; method: string; reference: string | null }[];
     credits: { id: string; credit_number: string | null; issued_on: string; amount: number; reason: string }[];
     unbilled: { id: string; cost_on: string; description: string | null; amount: number; horse_id: string; horses: { name: string } | null; cost_categories: { name: string } | null }[];
+    ownerHorses: { id: string; name: string }[];
   };
   insetsBottom: number;
   reload: () => Promise<void>;
 }) {
   const { business, logoUrl } = useBusiness();
   const currency = business!.currency_code;
-  const { invoice, lines, totals, payments, credits, unbilled } = data;
+  const { invoice, lines, totals, payments, credits, unbilled, ownerHorses } = data;
   const isDraft = invoice.status === 'draft';
+  const biz = business!;
+  const client = invoice.owners;
+  const horseNames = new Map(ownerHorses.map((h) => [h.id, h.name]));
+  const taxLabel = biz.tax_name || 'Tax';
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmIssue, setConfirmIssue] = useState(false);
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
 
   const issue = async () => {
     if (!confirmIssue) return setConfirmIssue(true);
@@ -144,10 +154,45 @@ function InvoiceView({
     setBusy(false);
   };
 
-  const share = () => {
-    const lineText = lines.map((l) => `${l.description} — ${formatMoney(l.quantity * l.unit_price, currency)}`).join('\n');
-    const message = `${business!.name}\nInvoice ${invoice.invoice_number ?? '(draft)'}\nTo: ${invoice.owners?.name}\n\n${lineText}\n\nTotal: ${formatMoney(totals?.total ?? 0, currency)}\nBalance due: ${formatMoney(totals?.balance ?? 0, currency)}${invoice.due_on ? `\nDue: ${formatDate(invoice.due_on)}` : ''}`;
-    Share.share({ message }).catch(() => {});
+  const share = async () => {
+    setError(null);
+    setShareNotice(null);
+    const money = (n: number | null | undefined) => formatMoney(n ?? 0, currency);
+    const from = [
+      biz.name,
+      biz.address,
+      biz.tax_number ? `${taxLabel} number: ${biz.tax_number}` : null,
+      biz.registration_number ? `Registration number: ${biz.registration_number}` : null,
+      [biz.phone, biz.email].filter(Boolean).join(' · ') || null,
+    ].filter(Boolean);
+    const to = [
+      `To: ${client?.name ?? ''}`,
+      client?.address,
+      client?.tax_number ? `${taxLabel} number: ${client.tax_number}` : null,
+    ].filter(Boolean);
+    const head = [
+      `Invoice ${invoice.invoice_number ?? '(draft)'}`,
+      invoice.issued_on ? `Date: ${formatDate(invoice.issued_on)}` : null,
+      invoice.due_on ? `Due: ${formatDate(invoice.due_on)}` : null,
+    ].filter(Boolean);
+    const lineText = lines.map((l) => `${l.description} — ${money(l.quantity * l.unit_price)}`);
+    const sums = [
+      `Subtotal: ${money(totals?.subtotal)}`,
+      `${taxLabel}: ${money(totals?.tax)}`,
+      `Total: ${money(totals?.total)}`,
+      Number(totals?.paid ?? 0) > 0 ? `Paid: ${money(totals?.paid)}` : null,
+      Number(totals?.credited ?? 0) > 0 ? `Credited: ${money(totals?.credited)}` : null,
+      `Balance due: ${money(totals?.balance)}`,
+    ].filter(Boolean);
+    const pay = biz.bank_details ? ['How to pay:', biz.bank_details] : [];
+    const message = [from, head, to, lineText, sums, pay]
+      .filter((block) => block.length > 0)
+      .map((block) => block.join('\n'))
+      .join('\n\n');
+
+    const outcome = await shareText(message);
+    if (outcome === 'copied') setShareNotice(COPIED_NOTICE);
+    if (outcome === 'failed') setError(SHARE_FAILED);
   };
 
   return (
@@ -157,22 +202,53 @@ function InvoiceView({
         <Card gold>
           <View style={styles.letterhead}>
             <LogoMark name={business!.name} uri={logoUrl} size={44} />
-            <View style={{ flex: 1 }}>
-              <AppText variant="bodyStrong">{business!.name}</AppText>
-              <AppText variant="small">To {invoice.owners?.name ?? '—'}</AppText>
+            <View style={{ flex: 1, gap: 2 }}>
+              <AppText variant="bodyStrong">{biz.name}</AppText>
+              {biz.address ? <AppText variant="small">{biz.address}</AppText> : null}
+              {biz.tax_number ? (
+                <AppText variant="small">
+                  {taxLabel} number: {biz.tax_number}
+                </AppText>
+              ) : null}
+              {biz.registration_number ? <AppText variant="small">Registration number: {biz.registration_number}</AppText> : null}
             </View>
+          </View>
+          <View style={styles.party}>
+            <AppText variant="label">Invoice to</AppText>
+            <AppText variant="bodyStrong">{client?.name ?? '—'}</AppText>
+            {client?.address ? <AppText variant="small">{client.address}</AppText> : null}
+            {client?.tax_number ? (
+              <AppText variant="small">
+                {taxLabel} number: {client.tax_number}
+              </AppText>
+            ) : null}
           </View>
           <View style={styles.statusRow}>
             <Badge label={INVOICE_STATUS_LABELS[invoice.status] ?? invoice.status} tone={invoice.status === 'paid' ? 'blue' : invoice.status === 'part_paid' ? 'gold' : 'muted'} />
-            {invoice.due_on ? <AppText variant="small">Due {formatDate(invoice.due_on)}</AppText> : null}
+            <AppText variant="small">
+              {[invoice.issued_on ? `Issued ${formatDate(invoice.issued_on)}` : null, invoice.due_on ? `Due ${formatDate(invoice.due_on)}` : null]
+                .filter(Boolean)
+                .join(' · ')}
+            </AppText>
           </View>
           <DetailRow label="Subtotal" value={formatMoney(totals?.subtotal ?? 0, currency)} />
-          <DetailRow label="Tax" value={formatMoney(totals?.tax ?? 0, currency)} />
+          <DetailRow label={taxLabel} value={formatMoney(totals?.tax ?? 0, currency)} />
           <DetailRow label="Total" value={formatMoney(totals?.total ?? 0, currency)} />
           {Number(totals?.paid ?? 0) > 0 ? <DetailRow label="Paid" value={formatMoney(totals?.paid ?? 0, currency)} /> : null}
           {Number(totals?.credited ?? 0) > 0 ? <DetailRow label="Credited" value={formatMoney(totals?.credited ?? 0, currency)} /> : null}
           <DetailRow label="Balance due" value={formatMoney(totals?.balance ?? 0, currency)} last />
+          {biz.bank_details ? (
+            <View style={styles.party}>
+              <AppText variant="label">How to pay</AppText>
+              <AppText variant="small">{biz.bank_details}</AppText>
+            </View>
+          ) : null}
           <ErrorText message={error} />
+          {shareNotice ? (
+            <AppText variant="small" color={Colors.success} accessibilityLiveRegion="polite">
+              {shareNotice}
+            </AppText>
+          ) : null}
           <View style={styles.buttonRow}>
             <View style={{ flex: 1 }}>
               <Button kind={isDraft ? 'secondary' : 'gold'} icon="upload" title="Share" onPress={share} disabled={lines.length === 0} />
@@ -193,8 +269,9 @@ function InvoiceView({
               <View style={{ flex: 1, gap: 2 }}>
                 <AppText variant="bodyStrong" numberOfLines={2}>{l.description}</AppText>
                 <AppText variant="small">
-                  {LINE_KIND_LABELS[l.line_kind] ?? l.line_kind} · {l.quantity} × {formatMoney(l.unit_price, currency)}
-                  {l.tax_applies ? ` · +${l.tax_rate}% tax` : ' · no tax'}
+                  {LINE_KIND_LABELS[l.line_kind] ?? l.line_kind}
+                  {l.horse_id && horseNames.has(l.horse_id) ? ` · ${horseNames.get(l.horse_id)}` : ''} · {l.quantity} × {formatMoney(l.unit_price, currency)}
+                  {l.tax_applies ? ` · +${l.tax_rate}% ${taxLabel}` : ` · no ${taxLabel}`}
                 </AppText>
               </View>
               <AppText variant="bodyStrong">{formatMoney(l.quantity * l.unit_price, currency)}</AppText>
@@ -223,7 +300,9 @@ function InvoiceView({
           </Card>
         ) : null}
 
-        {isDraft ? <AddLineCard invoiceId={invoice.id} businessId={invoice.business_id} onAdded={reload} /> : null}
+        {isDraft ? (
+          <AddLineCard invoiceId={invoice.id} businessId={invoice.business_id} horses={ownerHorses} taxLabel={taxLabel} onAdded={reload} />
+        ) : null}
 
         {!isDraft ? (
           <>
@@ -236,8 +315,26 @@ function InvoiceView({
   );
 }
 
-function AddLineCard({ invoiceId, businessId, onAdded }: { invoiceId: string; businessId: string; onAdded: () => Promise<void> }) {
+/** Stands for "this line is not for one particular horse" in the horse picker. */
+const NO_HORSE = '__none__';
+
+function AddLineCard({
+  invoiceId,
+  businessId,
+  horses,
+  taxLabel,
+  onAdded,
+}: {
+  invoiceId: string;
+  businessId: string;
+  horses: { id: string; name: string }[];
+  taxLabel: string;
+  onAdded: () => Promise<void>;
+}) {
   const [kind, setKind] = useState<LineKind>('other');
+  // The horse a line is for decides whose income it counts as. With one horse
+  // it is chosen already; with several the Manager must pick.
+  const [horseId, setHorseId] = useState<string | null>(horses.length === 1 ? horses[0].id : horses.length === 0 ? NO_HORSE : null);
   const [description, setDescription] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [price, setPrice] = useState('');
@@ -254,10 +351,12 @@ function AddLineCard({ invoiceId, businessId, onAdded }: { invoiceId: string; bu
     if (qty === null || qty <= 0) return setError('Enter a quantity, for example 1.');
     const unit = parseMoney(price);
     if (unit === null) return setError('Enter the price, for example 2500.');
+    if (horseId === null) return setError('Choose which horse this line is for, or “Not for one horse”.');
     setBusy(true);
     const { error: e } = await supabase.from('invoice_lines').insert({
       business_id: businessId,
       invoice_id: invoiceId,
+      horse_id: horseId === NO_HORSE ? null : horseId,
       line_kind: kind,
       description: description.trim(),
       quantity: qty,
@@ -276,6 +375,14 @@ function AddLineCard({ invoiceId, businessId, onAdded }: { invoiceId: string; bu
     <Card gold>
       <AppText variant="heading">Add a line</AppText>
       <Segmented label="Kind" options={kindOptions.map((k) => ({ value: k, label: LINE_KIND_LABELS[k] }))} value={kind} onChange={setKind} />
+      {horses.length > 0 ? (
+        <ChoiceList
+          label="Which horse is this for?"
+          options={[...horses.map((h) => ({ value: h.id, label: h.name })), { value: NO_HORSE, label: 'Not for one horse', note: 'Will not count towards any horse’s income' }]}
+          value={horseId}
+          onChange={setHorseId}
+        />
+      ) : null}
       <TextField label="Description" value={description} onChangeText={setDescription} placeholder="October livery" />
       <View style={styles.twoCol}>
         <View style={{ flex: 1 }}>
@@ -285,7 +392,7 @@ function AddLineCard({ invoiceId, businessId, onAdded }: { invoiceId: string; bu
           <TextField label="Unit price" value={price} onChangeText={setPrice} keyboardType="decimal-pad" placeholder="2500" />
         </View>
       </View>
-      <ToggleRow label="Tax applies" value={taxApplies} onChange={setTaxApplies} last />
+      <ToggleRow label={`${taxLabel} applies`} value={taxApplies} onChange={setTaxApplies} last />
       <ErrorText message={error} />
       <Button icon="add" title="Add line" onPress={add} loading={busy} />
     </Card>
@@ -410,7 +517,8 @@ function CreditNoteCard({
 
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', padding: Spacing.lg, gap: Spacing.md },
-  letterhead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  letterhead: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm },
+  party: { gap: 2 },
   statusRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   buttonRow: { flexDirection: 'row', gap: Spacing.sm },
   lineRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: 10 },
