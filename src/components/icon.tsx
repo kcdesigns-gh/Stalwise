@@ -11,6 +11,7 @@ const ICONS = {
   home: { ios: 'house', md: 'home' },
   horses: { ios: 'list.bullet.rectangle', md: 'list' },
   stalls: { ios: 'square.grid.2x2', md: 'grid_view' },
+  clients: { ios: 'person.2', md: 'group' },
   invoices: { ios: 'doc.text', md: 'receipt_long' },
   more: { ios: 'ellipsis.circle', md: 'more_horiz' },
   camera: { ios: 'camera', md: 'photo_camera' },

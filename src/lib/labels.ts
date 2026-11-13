@@ -1,6 +1,7 @@
 import type { HorsePurpose, HorseSex, MemberRole } from '@/lib/supabase';
 
 export const PURPOSE_LABELS: Record<HorsePurpose, string> = {
+  boarding: 'Boarding',
   broodstock: 'Broodstock',
   trading: 'Trading',
   training: 'Training',

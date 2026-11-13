@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,7 +28,8 @@ export default function NewInvoiceScreen() {
     [bid],
   );
 
-  const [ownerId, setOwnerId] = useState<string | null>(null);
+  const { owner: presetOwner } = useLocalSearchParams<{ owner?: string }>();
+  const [ownerId, setOwnerId] = useState<string | null>(presetOwner ?? null);
   const [busy, setBusy] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 

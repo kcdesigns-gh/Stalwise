@@ -38,6 +38,13 @@ export default function TabsLayout() {
         </NativeTabs.Trigger>
       ) : null}
 
+      {isManager ? (
+        <NativeTabs.Trigger name="clients">
+          <NativeTabs.Trigger.Label>Clients</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Icon sf={{ default: 'person.2', selected: 'person.2.fill' }} md="group" />
+        </NativeTabs.Trigger>
+      ) : null}
+
       <NativeTabs.Trigger name="more">
         <NativeTabs.Trigger.Label>More</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="ellipsis.circle" md="more_horiz" />

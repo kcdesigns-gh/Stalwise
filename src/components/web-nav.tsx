@@ -12,7 +12,7 @@ import { ROLE_LABELS } from '@/lib/labels';
 import { useAuth } from '@/providers/auth';
 import { useBusiness } from '@/providers/business';
 
-type NavItem = { href: '/' | '/horses' | '/stalls' | '/invoices' | '/more'; label: string; icon: IconName; show: boolean };
+type NavItem = { href: '/' | '/horses' | '/stalls' | '/invoices' | '/clients' | '/more'; label: string; icon: IconName; show: boolean };
 
 /** Width of the sidebar on a normal office monitor vs. a narrower window. */
 const FULL_WIDTH = 232;
@@ -35,6 +35,7 @@ export function WebSidebarNav() {
     { href: '/horses', label: 'Horses', icon: 'horses', show: true },
     { href: '/stalls', label: 'Stalls', icon: 'stalls', show: seesStalls },
     { href: '/invoices', label: 'Invoices', icon: 'invoices', show: isManager },
+    { href: '/clients', label: 'Clients', icon: 'clients', show: isManager },
     { href: '/more', label: 'More', icon: 'more', show: true },
   ];
 
