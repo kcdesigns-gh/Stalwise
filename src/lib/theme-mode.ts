@@ -21,9 +21,10 @@ function readPreference(): ThemePreference {
     const stored = sessionStorage?.getItem(KEY);
     if (stored === 'light' || stored === 'dark' || stored === 'system') return stored;
   } catch {
-    // Storage blocked (private browsing): fall back to light.
+    // Storage blocked (private browsing): use the default.
   }
-  return 'light';
+  // Dark is the default look. Anyone can switch under More > Appearance.
+  return 'dark';
 }
 
 function deviceTheme(): ThemeName {
@@ -83,7 +84,7 @@ function subscribe(listener: () => void) {
 
 /** The look on screen right now. */
 export function useThemeName(): ThemeName {
-  return useSyncExternalStore(subscribe, () => current, () => 'light' as ThemeName);
+  return useSyncExternalStore(subscribe, () => current, () => 'dark' as ThemeName);
 }
 
 export function useIsDark(): boolean {
@@ -92,7 +93,7 @@ export function useIsDark(): boolean {
 
 /** The saved choice, for the settings screen. */
 export function useThemePreference(): ThemePreference {
-  return useSyncExternalStore(subscribe, () => preference, () => 'light' as ThemePreference);
+  return useSyncExternalStore(subscribe, () => preference, () => 'dark' as ThemePreference);
 }
 
 /** True where a change only shows after the app is reopened. */

@@ -155,7 +155,7 @@ function AppearanceCard() {
       <AppText variant="small">
         {themeNeedsRestart
           ? 'Close and reopen the app to see the change. Saved on this device only.'
-          : 'Dark is easier on the eyes indoors and at night. Light reads better in bright sun. Saved on this device only.'}
+          : 'Dark is easier on the eyes indoors and at night. Switch to Light if the screen is hard to read in bright sun. Saved on this device only.'}
       </AppText>
     </Card>
   );
