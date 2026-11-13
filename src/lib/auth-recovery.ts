@@ -50,11 +50,12 @@ export async function consumeRecoveryLink(): Promise<boolean> {
   }
 
   if (hasTokens && params.type && SIGN_IN_LINK_TYPES.includes(params.type)) {
+    // Clear first: the token is already read, and signing in can take a while.
+    clearLinkFromAddressBar();
     const { error } = await supabase.auth.setSession({
       access_token: params.access_token,
       refresh_token: params.refresh_token,
     });
-    clearLinkFromAddressBar();
     return !error && params.type === 'recovery';
   }
   if (hasTokens) {
