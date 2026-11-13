@@ -992,6 +992,13 @@ export type Database = {
             foreignKeyName: "horse_ownership_owner_id_business_id_fkey"
             columns: ["owner_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "client_balances"
+            referencedColumns: ["owner_id", "business_id"]
+          },
+          {
+            foreignKeyName: "horse_ownership_owner_id_business_id_fkey"
+            columns: ["owner_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "owners"
             referencedColumns: ["id", "business_id"]
           },
@@ -1183,6 +1190,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "horse_sales_buyer_owner_id_business_id_fkey"
+            columns: ["buyer_owner_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "client_balances"
+            referencedColumns: ["owner_id", "business_id"]
           },
           {
             foreignKeyName: "horse_sales_buyer_owner_id_business_id_fkey"
@@ -1435,6 +1449,13 @@ export type Database = {
             foreignKeyName: "horses_current_owner_id_business_id_fkey"
             columns: ["current_owner_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "client_balances"
+            referencedColumns: ["owner_id", "business_id"]
+          },
+          {
+            foreignKeyName: "horses_current_owner_id_business_id_fkey"
+            columns: ["current_owner_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "owners"
             referencedColumns: ["id", "business_id"]
           },
@@ -1638,6 +1659,13 @@ export type Database = {
             foreignKeyName: "invoices_owner_id_business_id_fkey"
             columns: ["owner_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "client_balances"
+            referencedColumns: ["owner_id", "business_id"]
+          },
+          {
+            foreignKeyName: "invoices_owner_id_business_id_fkey"
+            columns: ["owner_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "owners"
             referencedColumns: ["id", "business_id"]
           },
@@ -1766,6 +1794,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "invoices"
             referencedColumns: ["id", "business_id"]
+          },
+          {
+            foreignKeyName: "message_log_owner_id_business_id_fkey"
+            columns: ["owner_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "client_balances"
+            referencedColumns: ["owner_id", "business_id"]
           },
           {
             foreignKeyName: "message_log_owner_id_business_id_fkey"
@@ -2239,6 +2274,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "horses"
             referencedColumns: ["id", "business_id"]
+          },
+          {
+            foreignKeyName: "recurring_charges_owner_id_business_id_fkey"
+            columns: ["owner_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "client_balances"
+            referencedColumns: ["owner_id", "business_id"]
           },
           {
             foreignKeyName: "recurring_charges_owner_id_business_id_fkey"
@@ -2812,6 +2854,13 @@ export type Database = {
             foreignKeyName: "waiting_list_owner_id_business_id_fkey"
             columns: ["owner_id", "business_id"]
             isOneToOne: false
+            referencedRelation: "client_balances"
+            referencedColumns: ["owner_id", "business_id"]
+          },
+          {
+            foreignKeyName: "waiting_list_owner_id_business_id_fkey"
+            columns: ["owner_id", "business_id"]
+            isOneToOne: false
             referencedRelation: "owners"
             referencedColumns: ["id", "business_id"]
           },
@@ -2819,6 +2868,26 @@ export type Database = {
       }
     }
     Views: {
+      client_balances: {
+        Row: {
+          balance: number | null
+          business_id: string | null
+          credited: number | null
+          invoiced: number | null
+          overdue_invoices: number | null
+          owner_id: string | null
+          paid: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owners_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       horse_profitability: {
         Row: {
           business_id: string | null
@@ -2925,11 +2994,11 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      join_with_invite: { Args: { invite_code: string }; Returns: Json }
       generate_recurring_invoices: {
         Args: { bid: string; for_month: string }
         Returns: number
       }
+      join_with_invite: { Args: { invite_code: string }; Returns: Json }
       remove_horse_from_stall: { Args: { horse: string }; Returns: undefined }
       run_month_allocation: {
         Args: { bid: string; for_month: string }
@@ -2959,7 +3028,7 @@ export type Database = {
       set_main_horse_photo: { Args: { photo: string }; Returns: undefined }
     }
     Enums: {
-      horse_purpose: "broodstock" | "trading" | "training"
+      horse_purpose: "broodstock" | "trading" | "training" | "boarding"
       horse_sex: "mare" | "stallion" | "gelding" | "colt" | "filly" | "rig"
       member_role: "manager" | "trainer" | "groom" | "casual"
     }
@@ -3089,7 +3158,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      horse_purpose: ["broodstock", "trading", "training"],
+      horse_purpose: ["broodstock", "trading", "training", "boarding"],
       horse_sex: ["mare", "stallion", "gelding", "colt", "filly", "rig"],
       member_role: ["manager", "trainer", "groom", "casual"],
     },

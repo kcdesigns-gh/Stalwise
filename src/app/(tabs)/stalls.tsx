@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
-import { AppText, BlueHeader, Button, Card, EmptyState, ErrorText, HeaderIconButton, Loading } from '@/components/ui';
+import { AppText, BlueHeader, Button, Card, ErrorText, Loading, TextField, ToggleRow } from '@/components/ui';
 import { Colors, WideContentMaxWidth, Radius, Spacing, TabBarClearance } from '@/constants/theme';
 import { formatDate } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
@@ -20,8 +20,10 @@ type StallView = {
 type WaitingAction = { id: string; status: 'placed' | 'withdrawn' };
 
 export default function StallsScreen() {
-  const { business, isManager } = useBusiness();
+  const { business, isManager, features } = useBusiness();
   const bid = business!.id;
+  const [stallCount, setStallCount] = useState('');
+  const [withCamp, setWithCamp] = useState(false);
   const [creating, setCreating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<WaitingAction | null>(null);
@@ -62,18 +64,23 @@ export default function StallsScreen() {
     return { stalls: views, waiting: must(waiting) ?? [] };
   }, [bid]);
 
-  const createKimcoLayout = async () => {
+  const createStalls = async () => {
     setActionError(null);
+    const count = Number.parseInt(stallCount.trim(), 10);
+    if (!Number.isInteger(count) || count < 1 || count > 500) {
+      setActionError('Enter how many training stalls you have, from 1 to 500.');
+      return;
+    }
     setCreating(true);
     const rows = [
-      ...Array.from({ length: 7 }, (_, i) => ({
+      ...Array.from({ length: count }, (_, i) => ({
         business_id: bid,
         name: `Stall ${i + 1}`,
         kind: 'training_stall',
         capacity: 1,
         sort_order: i + 1,
       })),
-      { business_id: bid, name: 'Broodmare camp', kind: 'camp', capacity: 40, sort_order: 100 },
+      ...(withCamp ? [{ business_id: bid, name: 'Broodmare camp', kind: 'camp', capacity: 40, sort_order: count + 100 }] : []),
     ];
     const { error: e } = await supabase.from('stalls').insert(rows);
     if (e) setActionError(e.message);
@@ -107,14 +114,6 @@ export default function StallsScreen() {
         title="Stalls"
         subtitle={data && training.length ? `${inUse} of ${training.length} training stalls in use` : undefined}
         wide
-        right={
-          isManager ? (
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <HeaderIconButton icon="more" label="Add or delete stalls" onPress={() => router.push('/stall/manage')} />
-              <HeaderIconButton icon="add" label="Add to waiting list" onPress={() => router.push('/waiting/new')} />
-            </View>
-          ) : null
-        }
       />
       {loading && !data ? (
         <Loading />
@@ -125,11 +124,25 @@ export default function StallsScreen() {
           <ErrorText message={error ?? actionError} />
 
           {data && data.stalls.length === 0 ? (
-            <EmptyState
-              title="No stalls yet"
-              message={isManager ? 'Start with 7 training stalls and one broodmare camp. You can rename or change them later.' : 'Your Manager has not set up stalls yet.'}
-              action={isManager ? <Button title="Set up 7 stalls and a camp" onPress={createKimcoLayout} loading={creating} /> : null}
-            />
+            isManager ? (
+              <Card>
+                <AppText variant="heading" accessibilityRole="header">
+                  Set up your stalls
+                </AppText>
+                <TextField
+                  label="How many training stalls do you have?"
+                  value={stallCount}
+                  onChangeText={setStallCount}
+                  keyboardType="number-pad"
+                  placeholder="For example 12"
+                  hint="Any number. You can add, rename or delete stalls later."
+                />
+                {features.breeding ? <ToggleRow label="Also add a broodmare camp" value={withCamp} onChange={setWithCamp} last /> : null}
+                <Button title="Create stalls" onPress={createStalls} loading={creating} />
+              </Card>
+            ) : (
+              <AppText muted>Your Manager has not set up stalls yet.</AppText>
+            )
           ) : null}
 
           {freeStall && nextClient ? (
@@ -179,7 +192,7 @@ export default function StallsScreen() {
                 Waiting list
               </AppText>
               {data.waiting.length === 0 ? (
-                <AppText muted>{isManager ? 'Nobody is waiting. Tap + at the top to add someone.' : 'Nobody is waiting.'}</AppText>
+                <AppText muted>Nobody is waiting.</AppText>
               ) : null}
               {data.waiting.map((w, i) => (
                 <View key={w.id} style={[styles.waitRow, i < data.waiting.length - 1 && styles.divider]}>
@@ -213,6 +226,9 @@ export default function StallsScreen() {
                   </View>
                 </View>
               ))}
+              {isManager ? (
+                <Button kind="secondary" icon="add" title="Add client to waiting list" onPress={() => router.push('/waiting/new')} />
+              ) : null}
             </Card>
           ) : null}
         </ScrollView>

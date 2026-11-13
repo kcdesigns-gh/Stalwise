@@ -57,6 +57,7 @@ export default function HorsesScreen() {
   const filters: { value: Filter; label: string }[] = [
     { value: 'all', label: 'All' },
     { value: 'training', label: 'Training' },
+    { value: 'boarding', label: 'Boarding' },
     { value: 'trading', label: 'Trading' },
     { value: 'broodstock', label: 'Broodstock' },
   ];

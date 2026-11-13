@@ -21,6 +21,7 @@ export default function WebTabsLayout() {
       <Tabs.Screen name="horses" options={{ title: 'Horses' }} />
       <Tabs.Screen name="stalls" options={{ title: 'Stalls', href: seesStalls ? undefined : null }} />
       <Tabs.Screen name="invoices" options={{ title: 'Invoices', href: isManager ? undefined : null }} />
+      <Tabs.Screen name="clients" options={{ title: 'Clients', href: isManager ? undefined : null }} />
       <Tabs.Screen name="more" options={{ title: 'More' }} />
     </Tabs>
   );

@@ -382,7 +382,7 @@ export default function HorseScreen() {
           </Card>
         ) : null}
 
-        {seesStalls && features.training && horse.current_purpose !== 'broodstock' ? (
+        {seesStalls && features.training && horse.current_purpose !== 'broodstock' && horse.current_purpose !== 'boarding' ? (
           <Card>
             <AppText variant="heading" accessibilityRole="header">
               Training
@@ -517,19 +517,15 @@ export default function HorseScreen() {
             <AppText variant="heading" accessibilityRole="header">
               Manager actions
             </AppText>
-            {ownHorse ? (
-              <Segmented
-                label="Change purpose"
-                options={(['training', 'trading', 'broodstock'] as HorsePurpose[])
-                  .filter((p) => (p === 'trading' ? features.trading : p === 'broodstock' ? features.breeding : true))
-                  .map((p) => ({ value: p, label: PURPOSE_LABELS[p] }))}
-                value={horse.current_purpose}
-                onChange={changePurpose}
-                disabled={saving}
-              />
-            ) : (
-              <AppText variant="small">Client horses stay on Training.</AppText>
-            )}
+            <Segmented
+              label="Change purpose"
+              options={((ownHorse ? ['training', 'trading', 'broodstock'] : ['training', 'boarding']) as HorsePurpose[])
+                .filter((p) => (p === 'trading' ? features.trading : p === 'broodstock' ? features.breeding : true))
+                .map((p) => ({ value: p, label: PURPOSE_LABELS[p] }))}
+              value={horse.current_purpose}
+              onChange={changePurpose}
+              disabled={saving}
+            />
             {ownHorse ? (
               <>
                 <TextField

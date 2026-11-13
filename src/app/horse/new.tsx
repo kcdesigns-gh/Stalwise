@@ -71,9 +71,12 @@ export default function NewHorseScreen() {
   const isClientHorse = chosenOwner === NEW_CLIENT || (!!chosenOwner && chosenOwner !== selfOwner?.id);
 
   // Cost price applies to the yard's own trading and broodstock horses, not client horses.
-  const needsCost = !isClientHorse && (purpose === 'trading' || purpose === 'broodstock');
+  // Client horses are either in Training or just Boarding; the yard's own horses are Training, Trading or Broodstock.
+  const purposeChoices: HorsePurpose[] = isClientHorse ? ['training', 'boarding'] : ['training', 'trading', 'broodstock'];
+  const effectivePurpose: HorsePurpose = purposeChoices.includes(purpose) ? purpose : 'training';
+  const needsCost = !isClientHorse && (effectivePurpose === 'trading' || effectivePurpose === 'broodstock');
 
-  const purposeOptions = (['training', 'trading', 'broodstock'] as HorsePurpose[])
+  const purposeOptions = purposeChoices
     .filter((p) => (p === 'trading' ? features.trading : p === 'broodstock' ? features.breeding : true))
     .map((p) => ({ value: p, label: PURPOSE_LABELS[p] }));
 
@@ -134,7 +137,7 @@ export default function NewHorseScreen() {
             previous_owner: previousOwner.trim() || null,
             notes: notes.trim() || null,
             current_owner_id: finalOwner,
-            current_purpose: isClientHorse ? 'training' : purpose,
+            current_purpose: effectivePurpose,
           })
           .select('id')
           .single(),
@@ -220,11 +223,12 @@ export default function NewHorseScreen() {
           <Segmented
             label="Purpose"
             options={purposeOptions}
-            value={isClientHorse ? 'training' : purpose}
+            value={effectivePurpose}
             onChange={setPurpose}
-            disabled={isClientHorse}
           />
-          {isClientHorse ? <AppText variant="small">Client horses are always Training.</AppText> : null}
+          {isClientHorse ? (
+            <AppText variant="small">Training: you train the horse. Boarding: you only keep it on the yard.</AppText>
+          ) : null}
           {needsCost ? (
             <TextField
               label={`Cost price (${business!.currency_code})`}

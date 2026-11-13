@@ -3,21 +3,54 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText, BlueHeader, Button, Card, ErrorText, Loading, TextField, ToggleRow } from '@/components/ui';
+import { AppText, Badge, BlueHeader, Button, Card, ErrorText, Loading, TextField, ToggleRow } from '@/components/ui';
 import { Colors, ContentMaxWidth, Spacing } from '@/constants/theme';
+import { formatDate, formatMoney } from '@/lib/format';
+import { INVOICE_STATUS_LABELS } from '@/lib/labels';
 import { supabase, type Tables } from '@/lib/supabase';
 import { must, useScreenData } from '@/lib/use-query';
+import { useBusiness } from '@/providers/business';
+
+type InvoiceRow = { id: string; invoice_number: string | null; status: string; issued_on: string | null; due_on: string | null; total: number; balance: number };
+type Summary = { invoiced: number; paid: number; balance: number; overdue: number };
 
 export default function OwnerScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const { data, error, loading, reload } = useScreenData(async () => {
-    const [owner, horses] = await Promise.all([
+    const [owner, horses, invoices, bal] = await Promise.all([
       supabase.from('owners').select('*').eq('id', id).single(),
       supabase.from('horses').select('id, name, stock_number, current_purpose').eq('current_owner_id', id).is('archived_at', null).order('name'),
+      supabase
+        .from('invoices')
+        .select('id, invoice_number, status, issued_on, due_on, created_at')
+        .eq('owner_id', id)
+        .order('created_at', { ascending: false }),
+      supabase.from('client_balances').select('invoiced, paid, balance, overdue_invoices').eq('owner_id', id).maybeSingle(),
     ]);
-    return { owner: must(owner), horses: must(horses) ?? [] };
+    const inv = must(invoices) ?? [];
+    const totals = inv.length
+      ? must(await supabase.from('invoice_totals').select('invoice_id, total, balance').in('invoice_id', inv.map((i) => i.id)))
+      : [];
+    const byId = new Map(totals.map((t) => [t.invoice_id, t]));
+    const rows: InvoiceRow[] = inv.map((i) => ({
+      id: i.id,
+      invoice_number: i.invoice_number,
+      status: i.status,
+      issued_on: i.issued_on,
+      due_on: i.due_on,
+      total: Number(byId.get(i.id)?.total ?? 0),
+      balance: Number(byId.get(i.id)?.balance ?? 0),
+    }));
+    const b = must(bal);
+    const summary: Summary = {
+      invoiced: Number(b?.invoiced ?? 0),
+      paid: Number(b?.paid ?? 0),
+      balance: Number(b?.balance ?? 0),
+      overdue: Number(b?.overdue_invoices ?? 0),
+    };
+    return { owner: must(owner), horses: must(horses) ?? [], invoices: rows, summary };
   }, [id]);
 
   if (loading && !data) return <Loading />;
@@ -31,15 +64,19 @@ export default function OwnerScreen() {
       </View>
     );
   }
-  return <OwnerView key={data.owner.id} owner={data.owner} horses={data.horses} insetsBottom={insets.bottom} reload={reload} />;
+  return <OwnerView key={data.owner.id} owner={data.owner} horses={data.horses} invoices={data.invoices} summary={data.summary} insetsBottom={insets.bottom} reload={reload} />;
 }
 
 function OwnerView({
   owner,
   horses,
+  invoices,
+  summary,
   insetsBottom,
   reload,
 }: {
+  invoices: InvoiceRow[];
+  summary: Summary;
   owner: Tables<'owners'>;
   horses: { id: string; name: string; stock_number: string | null; current_purpose: string }[];
   insetsBottom: number;
@@ -55,6 +92,26 @@ function OwnerView({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const { business } = useBusiness();
+  const currency = business!.currency_code;
+  const [confirmRemove, setConfirmRemove] = useState(false);
+
+  const removeBlocker = horses.length > 0
+    ? `${owner.name} still has ${horses.length} horse${horses.length === 1 ? '' : 's'} on the yard. Move or archive them first.`
+    : summary.balance > 0
+      ? `${owner.name} still owes ${formatMoney(summary.balance, currency)}. Settle or cancel the unpaid invoices first.`
+      : null;
+
+  const remove = async () => {
+    setError(null);
+    if (removeBlocker) return setError(removeBlocker);
+    if (!confirmRemove) return setConfirmRemove(true);
+    setBusy(true);
+    const { error: e } = await supabase.from('owners').update({ archived_at: new Date().toISOString() }).eq('id', owner.id);
+    setBusy(false);
+    if (e) return setError(e.message);
+    router.replace('/clients');
+  };
 
   const save = async () => {
     setError(null);
@@ -84,6 +141,50 @@ function OwnerView({
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <BlueHeader title={owner.is_self ? `${owner.name} (own)` : owner.name} showBack />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insetsBottom + 32 }]} keyboardShouldPersistTaps="handled">
+        {!owner.is_self ? (
+          <Card>
+            <AppText variant="heading" accessibilityRole="header">
+              Balance
+            </AppText>
+            <AppText variant="title">{formatMoney(summary.balance, currency)}</AppText>
+            <AppText variant="small">
+              {summary.balance > 0 ? 'Owing' : 'Nothing owing'} · invoiced {formatMoney(summary.invoiced, currency)} · paid {formatMoney(summary.paid, currency)}
+              {summary.overdue > 0 ? ` · ${summary.overdue} overdue` : ''}
+            </AppText>
+            <Button
+              kind="secondary"
+              icon="add"
+              title="New invoice for this client"
+              onPress={() => router.push({ pathname: '/invoice/new', params: { owner: owner.id } })}
+            />
+          </Card>
+        ) : null}
+
+        {!owner.is_self ? (
+          <Card>
+            <AppText variant="heading" accessibilityRole="header">
+              Invoices
+            </AppText>
+            {invoices.length === 0 ? <AppText muted>No invoices for this client yet.</AppText> : null}
+            {invoices.map((inv, i) => (
+              <Pressable
+                key={inv.id}
+                accessibilityRole="link"
+                onPress={() => router.push({ pathname: '/invoice/[id]', params: { id: inv.id } })}
+                style={[styles.horseRow, i < invoices.length - 1 && styles.divider]}>
+                <View style={{ gap: 2 }}>
+                  <AppText variant="bodyStrong">{inv.invoice_number ?? 'Draft'}</AppText>
+                  <AppText variant="small">{inv.due_on ? `Due ${formatDate(inv.due_on)}` : inv.issued_on ? `Issued ${formatDate(inv.issued_on)}` : ''}</AppText>
+                </View>
+                <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                  <AppText variant="bodyStrong">{formatMoney(inv.total, currency)}</AppText>
+                  <Badge label={INVOICE_STATUS_LABELS[inv.status] ?? inv.status} tone={inv.status === 'paid' ? 'blue' : inv.status === 'part_paid' ? 'gold' : 'muted'} />
+                </View>
+              </Pressable>
+            ))}
+          </Card>
+        ) : null}
+
         {horses.length > 0 ? (
           <Card>
             <AppText variant="heading">Horses</AppText>
@@ -112,6 +213,24 @@ function OwnerView({
             <ErrorText message={error} />
             {notice ? <AppText variant="small" color={Colors.success}>{notice}</AppText> : null}
             <Button title="Save" onPress={save} loading={busy} />
+          </Card>
+        ) : null}
+
+        {!owner.is_self ? (
+          <Card>
+            <AppText variant="heading" accessibilityRole="header">
+              Remove client
+            </AppText>
+            <AppText variant="small">
+              Removing hides the client from your list. Their invoices and history are kept for your records.
+            </AppText>
+            {removeBlocker ? <AppText variant="small" color={Colors.danger}>{removeBlocker}</AppText> : null}
+            <Button
+              kind="secondary"
+              title={confirmRemove ? 'Tap again to remove this client' : 'Remove client'}
+              onPress={remove}
+              disabled={busy}
+            />
           </Card>
         ) : null}
       </ScrollView>
