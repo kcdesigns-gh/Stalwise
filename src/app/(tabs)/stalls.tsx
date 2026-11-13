@@ -110,7 +110,7 @@ export default function StallsScreen() {
         right={
           isManager ? (
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <HeaderIconButton icon="more" label="Manage stalls" onPress={() => router.push('/stall/manage')} />
+              <HeaderIconButton icon="more" label="Add or delete stalls" onPress={() => router.push('/stall/manage')} />
               <HeaderIconButton icon="add" label="Add to waiting list" onPress={() => router.push('/waiting/new')} />
             </View>
           ) : null
@@ -167,6 +167,10 @@ export default function StallsScreen() {
                 ))}
               </View>
             </>
+          ) : null}
+
+          {isManager && data && data.stalls.length > 0 ? (
+            <Button kind="secondary" icon="add" title="Add or delete stalls" onPress={() => router.push('/stall/manage')} />
           ) : null}
 
           {data && data.stalls.length > 0 ? (
