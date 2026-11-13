@@ -63,6 +63,6 @@ export default function ResetPasswordScreen() {
 const styles = StyleSheet.create({
   container: { flexGrow: 1, backgroundColor: Colors.deepBlue, paddingHorizontal: Spacing.xl, gap: Spacing.xxl },
   brand: { alignItems: 'center', gap: Spacing.sm },
-  wordmark: { fontFamily: Fonts.extrabold, fontSize: 36, color: Colors.surface, letterSpacing: 0.3 },
+  wordmark: { fontFamily: Fonts.extrabold, fontSize: 36, color: Colors.onChrome, letterSpacing: 0.3 },
   card: { gap: Spacing.md, width: '100%', maxWidth: 480, alignSelf: 'center' },
 });

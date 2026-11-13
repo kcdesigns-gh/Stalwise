@@ -218,7 +218,7 @@ export default function HomeScreen() {
       />
       <ScrollView
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.royalBlue} />}>
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.link} />}>
         <ErrorText message={error} />
 
         {isManager ? (
@@ -246,7 +246,7 @@ export default function HomeScreen() {
                   value: data ? formatMoney(data.totalProfit, currency) : '–',
                   tone: !data ? 'muted' : data.totalProfit >= 0 ? 'pos' : 'neg',
                   note: 'Realised revenue minus total cost since entry',
-                  bar: Colors.deepBlue,
+                  bar: Colors.heading,
                 },
                 {
                   label: 'Projected',

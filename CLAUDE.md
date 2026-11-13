@@ -16,6 +16,6 @@ Horse business management app (stables, studs, trading yards). Built first for K
 - Child rows use composite foreign keys `(x_id, business_id)` so cross-business links are impossible.
 - New tables: create them in a migration and call `private.tenant_table(table, read_roles, write_roles, delete_roles)`.
 - Never hard-code South African settings; currency, tax name and rate come from `businesses`.
-- Look: fixed royal blue (#12285F / #1D3F9E) and gold (#D4AF37), Manrope font. Tokens in `src/constants/theme.ts`, shared components in `src/components/ui.tsx`.
+- Look: royal blue (#12285F / #1D3F9E) and gold (#D4AF37), Manrope font, in a light and a dark ("glass") version. Tokens in `src/constants/theme.ts`, shared components in `src/components/ui.tsx`. Never write a colour straight into a screen: use a `Colors` name, chosen by what the colour is for (`heading` for text on a card, `onChrome` for text on a header band, `link` for tappable text, `onGold` for text on gold). On web the names are CSS variables, so the look switches live; on iPhone and Android it is picked at start-up (`src/lib/theme-mode.ts`).
 - Don't add features Karel hasn't confirmed. The blueprint doc "Stalwise Blueprint v2" is the reference.
 - Before finishing: `npx tsc --noEmit` and `npx eslint src`. `npx expo lint`/`expo install` need `EXPO_OFFLINE=1` in the cloud workspace.

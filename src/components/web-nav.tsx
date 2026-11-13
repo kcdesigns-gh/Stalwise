@@ -62,7 +62,7 @@ export function WebSidebarNav() {
                 accessibilityState={{ selected: focused }}
                 onPress={() => router.push(item.href)}
                 style={[styles.link, compact && styles.linkCompact, focused && styles.linkActive]}>
-                <Icon name={item.icon} color={focused ? Colors.deepBlue : Colors.softBlue} size={18} />
+                <Icon name={item.icon} color={focused ? Colors.onGold : Colors.softBlue} size={18} />
                 {!compact ? <Text style={[styles.linkText, focused && styles.linkTextActive]}>{item.label}</Text> : null}
               </Pressable>
             );
@@ -94,10 +94,10 @@ export function WebSidebarNav() {
 }
 
 const styles = StyleSheet.create({
-  sidebar: { backgroundColor: Colors.deepBlue, flexDirection: 'column' },
+  sidebar: { backgroundColor: Colors.deepBlue, flexDirection: 'column', borderRightWidth: 1, borderRightColor: Colors.chromeBorder },
   brand: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, padding: Spacing.lg },
   brandCompact: { justifyContent: 'center', paddingHorizontal: Spacing.sm },
-  brandText: { fontFamily: Fonts.extrabold, fontSize: 16, color: Colors.surface, flexShrink: 1 },
+  brandText: { fontFamily: Fonts.extrabold, fontSize: 16, color: Colors.onChrome, flexShrink: 1 },
   links: { flex: 1, gap: 2, paddingHorizontal: Spacing.sm },
   link: {
     flexDirection: 'row',
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   linkCompact: { paddingHorizontal: 0, justifyContent: 'center' },
   linkActive: { backgroundColor: Colors.gold },
   linkText: { fontFamily: Fonts.semibold, fontSize: 14, color: Colors.softBlue },
-  linkTextActive: { fontFamily: Fonts.bold, color: Colors.deepBlue },
+  linkTextActive: { fontFamily: Fonts.bold, color: Colors.onGold },
   account: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontFamily: Fonts.extrabold, fontSize: 13, color: Colors.deepBlue },
-  accountName: { fontFamily: Fonts.bold, fontSize: 13, color: Colors.surface },
+  avatarText: { fontFamily: Fonts.extrabold, fontSize: 13, color: Colors.onGold },
+  accountName: { fontFamily: Fonts.bold, fontSize: 13, color: Colors.onChrome },
   accountRole: { fontFamily: Fonts.medium, fontSize: 11, color: Colors.softBlue, marginTop: 1 },
 });

@@ -97,7 +97,7 @@ export default function StallScreen() {
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.royalBlue} />}>
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.link} />}>
         <ErrorText message={error ?? actionError} />
 
         <Card gold>
@@ -119,7 +119,7 @@ export default function StallScreen() {
                 </AppText>
               </View>
               {isManager ? (
-                <AppText variant="small" color={Colors.royalBlue}>
+                <AppText variant="small" color={Colors.link}>
                   Change
                 </AppText>
               ) : null}

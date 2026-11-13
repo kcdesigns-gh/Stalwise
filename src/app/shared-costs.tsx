@@ -107,11 +107,11 @@ export default function SharedCostsScreen() {
         <ErrorText message={error} />
         <View style={styles.monthRow}>
           <Pressable accessibilityRole="button" accessibilityLabel="Previous month" onPress={() => changeMonth(-1)} hitSlop={8}>
-            <AppText variant="bodyStrong" color={Colors.royalBlue}>‹ Prev</AppText>
+            <AppText variant="bodyStrong" color={Colors.link}>‹ Prev</AppText>
           </Pressable>
           <AppText variant="heading">{MONTH_NAMES[month]} {year}</AppText>
           <Pressable accessibilityRole="button" accessibilityLabel="Next month" onPress={() => changeMonth(1)} hitSlop={8}>
-            <AppText variant="bodyStrong" color={Colors.royalBlue}>Next ›</AppText>
+            <AppText variant="bodyStrong" color={Colors.link}>Next ›</AppText>
           </Pressable>
         </View>
 

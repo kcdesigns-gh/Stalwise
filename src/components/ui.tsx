@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -15,7 +16,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/icon';
-import { Colors, ContentMaxWidth, Fonts, Radius, Spacing, WideContentMaxWidth } from '@/constants/theme';
+import { Colors, ContentMaxWidth, Fonts, Radius, Spacing, WebGlass, WideContentMaxWidth } from '@/constants/theme';
+import { useIsDark } from '@/lib/theme-mode';
 
 // ---------------------------------------------------------------------------
 // Text
@@ -40,12 +42,12 @@ export function AppText({
 
 const textStyles = StyleSheet.create({
   title: { fontFamily: Fonts.extrabold, fontSize: 22, color: Colors.text },
-  heading: { fontFamily: Fonts.extrabold, fontSize: 15, color: Colors.deepBlue },
+  heading: { fontFamily: Fonts.extrabold, fontSize: 15, color: Colors.heading },
   body: { fontFamily: Fonts.regular, fontSize: 15, color: Colors.text },
   bodyStrong: { fontFamily: Fonts.bold, fontSize: 15, color: Colors.text },
   label: { fontFamily: Fonts.bold, fontSize: 12, color: Colors.textMuted },
   small: { fontFamily: Fonts.medium, fontSize: 12, color: Colors.textMuted },
-  figure: { fontFamily: Fonts.extrabold, fontSize: 22, color: Colors.deepBlue },
+  figure: { fontFamily: Fonts.extrabold, fontSize: 22, color: Colors.heading },
 });
 
 // ---------------------------------------------------------------------------
@@ -110,7 +112,7 @@ export function BlueHeader({
             onPress={() => router.back()}
             style={styles.iconButton}
             hitSlop={8}>
-            <Icon name="back" color={Colors.surface} size={22} />
+            <Icon name="back" color={Colors.onChrome} size={22} />
           </Pressable>
         ) : null}
         {logo}
@@ -157,12 +159,13 @@ export function HeaderIconButton({
 // ---------------------------------------------------------------------------
 
 export function Card({ children, gold, style }: { children: ReactNode; gold?: boolean; style?: ViewStyle }) {
-  return <View style={[styles.card, gold && styles.cardGold, style]}>{children}</View>;
+  const dark = useIsDark();
+  return <View style={[styles.card, glass.panel, dark && styles.cardDark, gold && styles.cardGold, style]}>{children}</View>;
 }
 
 export function StatTile({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
-    <View style={styles.statTile}>
+    <View style={[styles.statTile, glass.panel]}>
       <AppText variant="label">{label}</AppText>
       <AppText variant="figure">{value}</AppText>
       {note ? <AppText variant="small">{note}</AppText> : null}
@@ -213,10 +216,10 @@ const badgeTones = StyleSheet.create({
 });
 
 const badgeTextColors = {
-  gold: Colors.deepBlue,
-  blue: Colors.surface,
-  outline: Colors.surface,
-  muted: Colors.deepBlue,
+  gold: Colors.onGold,
+  blue: Colors.onChrome,
+  outline: Colors.onChrome,
+  muted: Colors.heading,
 } as const;
 
 export function EmptyState({ title, message, action }: { title: string; message: string; action?: ReactNode }) {
@@ -234,7 +237,7 @@ export function EmptyState({ title, message, action }: { title: string; message:
 export function Loading() {
   return (
     <View style={styles.loading}>
-      <ActivityIndicator color={Colors.royalBlue} />
+      <ActivityIndicator color={Colors.link} />
     </View>
   );
 }
@@ -270,7 +273,8 @@ export function Button({
   icon?: IconName;
 }) {
   const off = disabled || loading;
-  const textColor = kind === 'primary' ? Colors.surface : kind === 'gold' ? Colors.darkGold : Colors.royalBlue;
+  const dark = useIsDark();
+  const textColor = kind === 'primary' ? Colors.onPrimary : kind === 'gold' ? Colors.darkGold : Colors.secondaryText;
   return (
     <Pressable
       accessibilityRole="button"
@@ -280,6 +284,8 @@ export function Button({
       style={({ pressed }) => [
         styles.button,
         buttonKinds[kind],
+        kind === 'primary' && glass.primary,
+        dark && styles.buttonDark,
         off && { opacity: 0.55 },
         pressed && !off && { opacity: 0.85 },
       ]}>
@@ -287,7 +293,7 @@ export function Button({
         <ActivityIndicator color={textColor} />
       ) : (
         <>
-          {icon ? <Icon name={icon} color={kind === 'primary' ? Colors.gold : textColor} size={18} /> : null}
+          {icon ? <Icon name={icon} color={kind === 'primary' ? Colors.primaryIcon : textColor} size={18} /> : null}
           <Text style={[styles.buttonText, { color: textColor }]}>{title}</Text>
         </>
       )}
@@ -296,8 +302,8 @@ export function Button({
 }
 
 const buttonKinds = StyleSheet.create({
-  primary: { backgroundColor: Colors.royalBlue },
-  secondary: { backgroundColor: Colors.surface, borderWidth: 1.5, borderColor: Colors.royalBlue },
+  primary: { backgroundColor: Colors.primary },
+  secondary: { backgroundColor: Colors.surface, borderWidth: 1.5, borderColor: Colors.secondaryBorder },
   gold: { backgroundColor: Colors.lightGold, borderWidth: 1.5, borderColor: Colors.gold },
 });
 
@@ -465,13 +471,13 @@ export function IconStat({
 }
 
 const statBadgeTones = StyleSheet.create({
-  blue: { backgroundColor: '#E7ECFA' },
+  blue: { backgroundColor: Colors.tintBlue },
   gold: { backgroundColor: Colors.lightGold },
-  green: { backgroundColor: '#E3F3EA' },
+  green: { backgroundColor: Colors.tintGreen },
 });
 
 const statIconColors = {
-  blue: Colors.royalBlue,
+  blue: Colors.link,
   gold: Colors.darkGold,
   green: Colors.success,
 } as const;
@@ -560,7 +566,7 @@ export function PLBreakdown({
   return (
     <View style={plStyles.row}>
       {items.map((item) => (
-        <View key={item.label} style={[plStyles.card, { borderTopColor: item.bar }]}>
+        <View key={item.label} style={[plStyles.card, glass.panel, { borderTopColor: item.bar }]}>
           <AppText variant="label">{item.label}</AppText>
           <AppText
             variant="figure"
@@ -610,6 +616,13 @@ const plStyles = StyleSheet.create({
   figure: { fontSize: 22 },
 });
 
+// Web-only parts of the dark "glass" look: a light edge on panels and a gold
+// sheen on the main button. In the light look both resolve to nothing.
+const glass = StyleSheet.create({
+  panel: Platform.OS === 'web' ? ({ boxShadow: WebGlass.cardShadow } as ViewStyle) : {},
+  primary: Platform.OS === 'web' ? ({ backgroundImage: WebGlass.primaryImage } as unknown as ViewStyle) : {},
+});
+
 const styles = StyleSheet.create({
   logoFallback: {
     borderWidth: 2,
@@ -629,7 +642,7 @@ const styles = StyleSheet.create({
   headerInner: { width: '100%', maxWidth: ContentMaxWidth, alignSelf: 'center', gap: Spacing.md },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   headerText: { flex: 1 },
-  headerTitle: { fontFamily: Fonts.extrabold, fontSize: 20, color: Colors.surface },
+  headerTitle: { fontFamily: Fonts.extrabold, fontSize: 20, color: Colors.onChrome },
   headerSubtitle: { fontFamily: Fonts.medium, fontSize: 13, color: Colors.softBlue, marginTop: 2 },
   iconButton: { width: 32, height: 44, alignItems: 'center', justifyContent: 'center' },
   headerIconButton: {
@@ -650,6 +663,9 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   cardGold: { borderWidth: 1.5, borderColor: Colors.gold },
+  // The dark look has rounder panels and pill buttons.
+  cardDark: { borderRadius: 22 },
+  buttonDark: { borderRadius: Radius.pill },
   statTile: {
     flex: 1,
     backgroundColor: Colors.surface,
@@ -705,7 +721,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  segmentSelected: { backgroundColor: Colors.deepBlue, borderColor: Colors.deepBlue },
+  segmentSelected: { backgroundColor: Colors.selected, borderColor: Colors.selectedBorder },
   segmentText: { fontFamily: Fonts.semibold, fontSize: 14, color: Colors.text },
   segmentTextSelected: { color: Colors.gold, fontFamily: Fonts.bold },
   choice: {
@@ -719,12 +735,12 @@ const styles = StyleSheet.create({
     gap: 2,
     justifyContent: 'center',
   },
-  choiceSelected: { backgroundColor: Colors.deepBlue, borderColor: Colors.deepBlue },
+  choiceSelected: { backgroundColor: Colors.selected, borderColor: Colors.selectedBorder },
   toggleRow: { flexDirection: 'row', alignItems: 'center', minHeight: 52, gap: Spacing.md },
   toggleTrack: { width: 52, height: 30, borderRadius: 15, padding: 3, justifyContent: 'center' },
   toggleOn: { backgroundColor: Colors.royalBlue },
   toggleOff: { backgroundColor: Colors.inputBorder },
   toggleKnob: { width: 24, height: 24, borderRadius: 12 },
   knobOn: { backgroundColor: Colors.gold, alignSelf: 'flex-end' },
-  knobOff: { backgroundColor: Colors.surface, alignSelf: 'flex-start' },
+  knobOff: { backgroundColor: Colors.onChrome, alignSelf: 'flex-start' },
 });

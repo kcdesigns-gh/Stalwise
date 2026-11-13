@@ -9,10 +9,10 @@ export default function TabsLayout() {
 
   return (
     <NativeTabs
-      tintColor={Colors.royalBlue}
+      tintColor={Colors.link}
       labelStyle={{
         default: { fontFamily: Fonts.semibold, color: Colors.textMuted },
-        selected: { fontFamily: Fonts.bold, color: Colors.deepBlue },
+        selected: { fontFamily: Fonts.bold, color: Colors.heading },
       }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
